@@ -26,3 +26,11 @@ Support Server & Client side of the protocol.
      |        |<-(F)--- Protected Resource ---|               |
      +--------+                               +---------------+
 ```
+
+## Todo
+
+- [ ] Completing [Abstract Client Provider](src/Abstracts/AbstractClientProvider.php)
+- [ ] Creating Sample Provider (e.g. GitHub, Google, Facebook, etc.)
+- [ ] Creating Sample Server (e.g. Authorization Server, Resource Server, etc.)
+- [ ] Completing final classes for server implementation.
+- [ ] More Features ...
