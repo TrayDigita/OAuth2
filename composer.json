@@ -1,0 +1,68 @@
+{
+    "name": "traydigita/oauth2",
+    "description": "OAuth2 library for PHP, providing PSR-3/7/17/18 compliance, a simple and flexible way to integrate OAuth2 authentication into your applications.",
+    "type": "library",
+    "homepage": "https://github.com/TrayDigita/OAuth2",
+    "license": "MIT",
+    "prefer-stable": true,
+    "keywords": [
+        "authentication",
+        "oauth2",
+        "rfc6749",
+        "rfc-6749",
+        "oauth",
+        "psr-18",
+        "psr-7",
+        "psr-17",
+        "psr-3",
+        "php"
+    ],
+    "authors": [
+        {
+            "name": "arrayiterator",
+            "email": "arrayiterator@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-json": "*",
+        "psr/http-client": "^1.0",
+        "psr/http-message": "^1.0 || ^2.0",
+        "psr/http-factory": "^1.0",
+        "psr/cache": "^1.0 || ^2.0 || ^3.0",
+        "psr/log": "^1.0 || ^2.0 || ^3.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "slevomat/coding-standard": "^8.28.1",
+        "squizlabs/php_codesniffer": "^4.0.1",
+        "phpunit/phpunit": "^10.5",
+        "guzzlehttp/guzzle": "7.10.0"
+    },
+    "suggest": {
+        "guzzlehttp/guzzle": "For PSR-18 HTTP client implementation"
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit --config=phpunit.xml.dist",
+        "lint": "./vendor/bin/phpcs --standard=phpcs.xml.dist",
+        "analyse": "./vendor/bin/phpstan --configuration=phpstan.neon"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "TrayDigita\\OAuth2\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TrayDigita\\OAuth2\\": "src/",
+            "TrayDigita\\OAuth2Tests\\": "tests/"
+        }
+    }
+}
