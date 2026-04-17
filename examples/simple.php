@@ -31,7 +31,6 @@ try {
             ->getResponseFactory()
             ->createResponse(200)
             ->withHeader('content-type', 'application/json');
-        print_r($oauthServer);exit;
         // do any validation
         $body = null;
         $streamFactory = $oauthServer->getStreamFactory();
