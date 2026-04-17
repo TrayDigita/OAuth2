@@ -7,12 +7,14 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UploadedFileFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Throwable;
 use TrayDigita\OAuth2\Enums\ErrorType;
 use TrayDigita\OAuth2\Exceptions\Response\OAuth2ResponseErrorException;
 use TrayDigita\OAuth2\Interfaces\Clients\GrantRegistryInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantParametersInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\OAuth2RequestInterface;
 use TrayDigita\OAuth2\Utils\HttpFactoryClientResolver;
 use function is_array;
 use function is_int;
@@ -32,6 +34,7 @@ class OAuth2Server
      * @param ResponseFactoryInterface|null $responseFactory
      * @param UriFactoryInterface|null $uriFactory
      * @param ServerRequestFactoryInterface|null $serverRequestFactory
+     * @param UploadedFileFactoryInterface|null $uploadedFileFactory
      */
     public function __construct(
         private GrantRegistryInterface         $grantRegistry = new GrantRegistry(),
@@ -39,6 +42,7 @@ class OAuth2Server
         private ?ResponseFactoryInterface      $responseFactory = null,
         private ?UriFactoryInterface           $uriFactory = null,
         private ?ServerRequestFactoryInterface $serverRequestFactory = null,
+        private ?UploadedFileFactoryInterface  $uploadedFileFactory = null
     ) {
     }
 
@@ -51,10 +55,7 @@ class OAuth2Server
      */
     public function getStreamFactory(): StreamFactoryInterface
     {
-        if (!isset($this->streamFactory)) {
-            $this->streamFactory = HttpFactoryClientResolver::getStreamFactory();
-        }
-        return $this->streamFactory;
+        return $this->streamFactory ??= HttpFactoryClientResolver::getStreamFactory();
     }
 
     /**
@@ -70,16 +71,13 @@ class OAuth2Server
     /**
      * Get Response Factory
      *
-     * @return ResponseFactoryInterface|null
+     * @return ResponseFactoryInterface
      * @throws \TrayDigita\OAuth2\Exceptions\UnsatisfiedDependencyException
      * @noinspection PhpFullyQualifiedNameUsageInspection
      */
-    public function getResponseFactory(): ?ResponseFactoryInterface
+    public function getResponseFactory(): ResponseFactoryInterface
     {
-        if (!isset($this->responseFactory)) {
-            $this->responseFactory = HttpFactoryClientResolver::getResponseFactory();
-        }
-        return $this->responseFactory;
+        return $this->responseFactory ??= HttpFactoryClientResolver::getResponseFactory();
     }
 
     /**
@@ -101,23 +99,61 @@ class OAuth2Server
      */
     public function getUriFactory(): UriFactoryInterface
     {
-        if (!isset($this->uriFactory)) {
-            $this->uriFactory = HttpFactoryClientResolver::getUriFactory();
-        }
-        return $this->uriFactory;
+        return $this->uriFactory ??= HttpFactoryClientResolver::getUriFactory();
     }
 
+    /**
+     * Set URI Factory
+     *
+     * @param UriFactoryInterface $uriFactory
+     */
+    public function setUriFactory(UriFactoryInterface $uriFactory): void
+    {
+        $this->uriFactory = $uriFactory;
+    }
+
+    /**
+     * Get Server Request Factory
+     *
+     * @return ServerRequestFactoryInterface
+     * @throws \TrayDigita\OAuth2\Exceptions\UnsatisfiedDependencyException
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     */
     public function getServerRequestFactory(): ServerRequestFactoryInterface
     {
-        if (!isset($this->serverRequestFactory)) {
-            $this->serverRequestFactory = HttpFactoryClientResolver::getServerRequestFactory();
-        }
-        return $this->serverRequestFactory;
+        return $this->serverRequestFactory ??= HttpFactoryClientResolver::getServerRequestFactory();
     }
 
+    /**
+     * Set Server Request Factory
+     *
+     * @param ServerRequestFactoryInterface $serverRequestFactory
+     */
     public function setServerRequestFactory(ServerRequestFactoryInterface $serverRequestFactory): void
     {
         $this->serverRequestFactory = $serverRequestFactory;
+    }
+
+    /**
+     * Get Uploaded File Factory
+     *
+     * @return UploadedFileFactoryInterface
+     * @throws \TrayDigita\OAuth2\Exceptions\UnsatisfiedDependencyException
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     */
+    public function getUploadedFileFactory(): UploadedFileFactoryInterface
+    {
+        return $this->uploadedFileFactory ??= HttpFactoryClientResolver::getUploadedFileFactory();
+    }
+
+    /**
+     * Set Uploaded File Factory
+     *
+     * @param UploadedFileFactoryInterface $uploadedFileFactory
+     */
+    public function setUploadedFileFactory(UploadedFileFactoryInterface $uploadedFileFactory): void
+    {
+        $this->uploadedFileFactory = $uploadedFileFactory;
     }
 
     /**
@@ -178,7 +214,7 @@ class OAuth2Server
                 $uri,
                 $_SERVER,
             );
-            $uploadedFileFactory = HttpFactoryClientResolver::getUploadedFileFactory();
+            $uploadedFileFactory = $this->getUploadedFileFactory();
             $streamFactory = $this->getStreamFactory();
             foreach ($_FILES as $file) {
                 if (is_array($file['name'])) {
@@ -239,16 +275,13 @@ class OAuth2Server
      *     $exception->intoResponse($responseFactory, $streamFactory);
      * }
      * </code>
-     *
-     * @return array{
-     *     'grant': GrantParametersInterface<TList, non-empty-string, non-empty-string>,
-     *     'parameters': array<non-empty-string, mixed>
-     * }
+     * @param ServerRequestInterface|null $request
+     * The server request to parse. If null, a new server request will be created from the globals.
+     * @return OAuth2RequestInterface<TList, non-empty-string, non-empty-string>
      * @throws OAuth2ResponseErrorException
-     * @noinspection PhpFullyQualifiedNameUsageInspection
      * @see \TrayDigita\OAuth2\Abstracts\AbstractGrant
      */
-    public function getDefinitions(?ServerRequestInterface $request = null): array
+    public function parse(?ServerRequestInterface $request = null): OAuth2RequestInterface
     {
         $request ??= $this->createNewServerRequest();
         $grant = null;
@@ -276,10 +309,6 @@ class OAuth2Server
                 ErrorType::UNSUPPORTED_GRANT_TYPE
             );
         }
-        $parameters = $grant->parseServerRequest($request);
-        return [
-            'grant' => $grant,
-            'parameters' => $parameters
-        ];
+        return $grant->parseServerRequest($request);
     }
 }

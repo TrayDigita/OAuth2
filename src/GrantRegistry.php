@@ -21,6 +21,7 @@ use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantParametersInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ImplicitGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\RefreshTokenGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ResourceOwnerGrantInterface;
+use function sprintf;
 
 /**
  * Grant Registry

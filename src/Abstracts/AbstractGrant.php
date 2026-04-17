@@ -4,15 +4,22 @@ declare(strict_types=1);
 namespace TrayDigita\OAuth2\Abstracts;
 
 use Psr\Http\Message\ServerRequestInterface;
+use Throwable;
 use TrayDigita\OAuth2\Enums\ErrorType;
 use TrayDigita\OAuth2\Enums\RequestType;
+use TrayDigita\OAuth2\Exceptions\AccessDeniedException;
+use TrayDigita\OAuth2\Exceptions\OperationNotPermittedException;
 use TrayDigita\OAuth2\Exceptions\Response\OAuth2ResponseErrorException;
 use TrayDigita\OAuth2\Exceptions\StrictParameterException;
+use TrayDigita\OAuth2\Exceptions\UnauthorizedException;
 use TrayDigita\OAuth2\Exceptions\UnsatisfiedGrantParameterException;
+use TrayDigita\OAuth2\Exceptions\UnsatisfiedParameterException;
 use TrayDigita\OAuth2\Exceptions\UnsupportedOperationException;
+use TrayDigita\OAuth2\Interfaces\Exceptions\ExceptionInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantParametersInterface;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeAuthorization;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeToken;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeAuthorizationInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeTokenInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\OAuth2RequestInterface;
 use TrayDigita\OAuth2\Servers\ErrorUris;
 use function array_fill_keys;
 use function array_key_exists;
@@ -84,10 +91,10 @@ abstract class AbstractGrant implements GrantParametersInterface
             return $this->grantTypeSupportedRequestTypes;
         }
         $types = [];
-        if ($this instanceof GrantTypeAuthorization) {
+        if ($this instanceof GrantTypeAuthorizationInterface) {
             $types[] = RequestType::AUTHORIZATION;
         }
-        if ($this instanceof GrantTypeToken) {
+        if ($this instanceof GrantTypeTokenInterface) {
             $types[] = RequestType::TOKEN;
         }
         return $this->grantTypeSupportedRequestTypes = $types;
@@ -279,23 +286,25 @@ abstract class AbstractGrant implements GrantParametersInterface
      *     scope?: string,
      *     ...<string, mixed>,
      * }
+     * @throws OAuth2ResponseErrorException
+     * @return OAuth2RequestInterface<GrantType, GrantTypeKey, GrantTypeValue>
      */
     public function parseServerRequest(
         ServerRequestInterface $request
-    ): array {
+    ): OAuth2RequestInterface {
         try {
             $requestType = $this->getServerRequestType($request);
         } catch (UnsupportedOperationException $e) {
             throw new OAuth2ResponseErrorException(
                 ErrorType::INVALID_CLIENT,
-                errorUri: ErrorUris::errorUriFor($this->getGrantType()),
+                errorUri: ErrorUris::errorUriFor(sprintf('grant_type:%s', $this->getGrantType())),
                 previous: $e
             );
         }
         if (!$this->isSupportedRequest($request)) {
              throw new OAuth2ResponseErrorException(
                  ErrorType::INVALID_CLIENT,
-                 errorUri: ErrorUris::errorUriFor($this->getGrantType()),
+                 errorUri: ErrorUris::errorUriFor(sprintf('grant_type:%s', $this->getGrantType())),
              );
         }
 
@@ -305,7 +314,7 @@ abstract class AbstractGrant implements GrantParametersInterface
         ) {
             throw new OAuth2ResponseErrorException(
                 ErrorType::INVALID_CLIENT,
-                errorUri: ErrorUris::errorUriFor($requestType->value),
+                errorUri: ErrorUris::errorUriFor(sprintf('request_type:%s', $requestType->value)),
             );
         }
 
@@ -323,7 +332,7 @@ abstract class AbstractGrant implements GrantParametersInterface
         if (!is_array($params)) {
             throw new OAuth2ResponseErrorException(
                 ErrorType::INVALID_REQUEST,
-                errorUri: ErrorUris::errorUriFor($requestType->value),
+                errorUri: ErrorUris::errorUriFor(sprintf('invalid_parameters:%s', $requestType->value)),
                 state: $errState
             );
         }
@@ -331,7 +340,7 @@ abstract class AbstractGrant implements GrantParametersInterface
             if ($state !== null && !is_string($state)) {
                 throw new OAuth2ResponseErrorException(
                     ErrorType::INVALID_STATE,
-                    errorUri: ErrorUris::errorUriFor('state'),
+                    errorUri: ErrorUris::errorUriFor('parameter:state'),
                     state: $errState
                 );
             }
@@ -340,7 +349,7 @@ abstract class AbstractGrant implements GrantParametersInterface
             if ($scope !== null && !is_string($scope)) {
                 throw new OAuth2ResponseErrorException(
                     ErrorType::INVALID_SCOPE,
-                    errorUri: ErrorUris::errorUriFor('scope'),
+                    errorUri: ErrorUris::errorUriFor('parameter:scope'),
                 );
             }
         }
@@ -354,7 +363,7 @@ abstract class AbstractGrant implements GrantParametersInterface
             if (!isset($params[$key])) {
                 throw new OAuth2ResponseErrorException(
                     ErrorType::INVALID_REQUEST,
-                    errorUri: ErrorUris::errorUriFor($key),
+                    errorUri: ErrorUris::errorUriFor(sprintf('parameter:%s', $key)),
                     state: $errState,
                     message: sprintf('Parameter "%s" is required', $key)
                 );
@@ -363,7 +372,7 @@ abstract class AbstractGrant implements GrantParametersInterface
                 if (!$this->isGrantTypeRequestValid($params[$key])) {
                     throw new OAuth2ResponseErrorException(
                         ErrorType::INVALID_GRANT,
-                        errorUri: ErrorUris::errorUriFor($key),
+                        errorUri: ErrorUris::errorUriFor(sprintf('parameter:%s', $key)),
                         state: $errState,
                     );
                 }
@@ -371,7 +380,7 @@ abstract class AbstractGrant implements GrantParametersInterface
             if (!$this->isClientParameterSatisfied($requestType, $key, $params[$key])) {
                 throw new OAuth2ResponseErrorException(
                     ErrorType::INVALID_REQUEST,
-                    errorUri: ErrorUris::errorUriFor($key),
+                    errorUri: ErrorUris::errorUriFor(sprintf('parameter:%s', $key)),
                     state: $errState,
                     message: sprintf('Parameter "%s" is not valid', $key)
                 );
@@ -390,22 +399,84 @@ abstract class AbstractGrant implements GrantParametersInterface
             if (!$this->isClientParameterSatisfied($requestType, $key, $params[$key])) {
                 throw new OAuth2ResponseErrorException(
                     ErrorType::INVALID_REQUEST,
-                    errorUri: ErrorUris::errorUriFor($key),
+                    errorUri: ErrorUris::errorUriFor(sprintf('parameter:%s', $key)),
                     state: $errState,
                     message: sprintf('Parameter "%s" is not valid', $key)
                 );
             }
             $parameters[$key] = $params[$key];
         }
-        /**
-         * @var array<GrantTypeKey, GrantTypeValue>&array{
-         *      state?: string,
-         *      scope?: string,
-         *      ...<string, mixed>,
-         *  } $parameters
-         */
-        return $parameters;
+        try {
+            /**
+             * @var array<GrantTypeKey, GrantTypeValue>&array{
+             *      state?: string,
+             *      scope?: string,
+             *      ...<string, mixed>,
+             *  } $parameters
+             */
+            return $this->convertOAuth2Request(
+                $request,
+                $requestType,
+                $parameters
+            );
+        } catch (Throwable $exception) {
+            if ($exception instanceof OAuth2ResponseErrorException) {
+                throw $exception;
+            }
+            /**
+             * @var array<class-string<ExceptionInterface>, ErrorType> $types
+             */
+            $types = [
+                UnsatisfiedParameterException::class => ErrorType::INVALID_REQUEST,
+                OperationNotPermittedException::class => ErrorType::UNAUTHORIZED_CLIENT,
+                StrictParameterException::class => ErrorType::INVALID_REQUEST,
+                UnauthorizedException::class => ErrorType::UNAUTHORIZED_CLIENT,
+                AccessDeniedException::class => ErrorType::ACCESS_DENIED,
+                ExceptionInterface::class => ErrorType::UNAUTHORIZED_CLIENT, // last sort
+            ];
+            foreach ($types as $class => $type) {
+                if ($exception instanceof $class) {
+                    throw new OAuth2ResponseErrorException(
+                        $type,
+                        errorUri: ErrorUris::errorUriFor(sprintf('request_type:%s', $requestType->value)),
+                        state: $state,
+                        message: $exception->getMessage(),
+                        previous: $exception
+                    );
+                }
+            }
+            throw new OAuth2ResponseErrorException(
+                ErrorType::SERVER_ERROR,
+                errorUri: ErrorUris::errorUriFor(sprintf('request_type:%s', $requestType->value)),
+                state: $state,
+                previous: $exception
+            );
+        }
     }
+
+    /**
+     * Create an OAuth2RequestInterface instance from the given parameters.
+     *
+     * @param ServerRequestInterface $request The original server request.
+     * @param RequestType $requestType The type of the request (authorization or token).
+     * @param array<GrantTypeKey, GrantTypeValue>&array{
+     *      state?: string,
+     *      scope?: string,
+     *      ...<string, mixed>,
+     *  } $parameters
+     * @return OAuth2RequestInterface<GrantType, GrantTypeKey, GrantTypeValue>
+     *     The created OAuth2RequestInterface instance.
+     * @throws OAuth2ResponseErrorException
+     * If the parameters are invalid or cannot be used to create a valid request,
+     * an OAuth2ResponseErrorException should be thrown with an appropriate error type and message.
+     * @throws Throwable
+     * @see self::parseServerRequest()
+     */
+    abstract protected function convertOAuth2Request(
+        ServerRequestInterface $request,
+        RequestType $requestType,
+        array $parameters
+    ): OAuth2RequestInterface;
 
     /**
      * @inheritdoc

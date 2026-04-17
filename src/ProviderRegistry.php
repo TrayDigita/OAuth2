@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace TrayDigita\OAuth2\Clients;
+namespace TrayDigita\OAuth2;
 
 use TrayDigita\OAuth2\Exceptions\Clients\ProviderAlreadyExistsException;
 use TrayDigita\OAuth2\Exceptions\Clients\ProviderNotFoundException;

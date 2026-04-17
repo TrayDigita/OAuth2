@@ -13,6 +13,7 @@ use function array_filter;
 use function in_array;
 use function is_numeric;
 use function is_string;
+use function trim;
 use const ARRAY_FILTER_USE_BOTH;
 
 /**

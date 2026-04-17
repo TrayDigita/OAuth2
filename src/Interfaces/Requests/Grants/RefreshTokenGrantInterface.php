@@ -55,9 +55,9 @@ use TrayDigita\OAuth2\Enums\RequestType;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-6 Refreshing an Access Token (RFC 6749, §6)
  * @see https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1 Example Password Authentication
  *
- * @template-extends GrantTypeToken<"refresh_token", "grant_type", "refresh_token">
+ * @template-extends GrantTypeTokenInterface<"refresh_token", "grant_type", "refresh_token">
  */
-interface RefreshTokenGrantInterface extends GrantTypeToken
+interface RefreshTokenGrantInterface extends GrantTypeTokenInterface
 {
     /**
      * Grant name constant

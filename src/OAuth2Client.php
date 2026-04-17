@@ -7,7 +7,6 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
-use TrayDigita\OAuth2\Clients\ProviderRegistry;
 use TrayDigita\OAuth2\Interfaces\Clients\ClientProviderRegistryInterface;
 use TrayDigita\OAuth2\Interfaces\Clients\GrantRegistryInterface;
 use TrayDigita\OAuth2\Utils\HttpFactoryClientResolver;
@@ -23,6 +22,8 @@ use TrayDigita\OAuth2\Utils\HttpFactoryClientResolver;
 class OAuth2Client
 {
     /**
+     * OAuth2 Client Constructor.
+     *
      * @param GrantRegistryInterface<TList> $grantRegistry
      * @param ClientProviderRegistryInterface $providerRegistry
      * @param ClientInterface|null $client
@@ -59,10 +60,7 @@ class OAuth2Client
      */
     public function getClient(): ClientInterface
     {
-        if (!isset($this->client)) {
-            $this->client = HttpFactoryClientResolver::getClient();
-        }
-        return $this->client;
+        return $this->client ??= HttpFactoryClientResolver::getClient();
     }
 
     /**
@@ -92,10 +90,7 @@ class OAuth2Client
      */
     public function getUriFactory(): ?UriFactoryInterface
     {
-        if (!isset($this->uriFactory)) {
-            $this->uriFactory = HttpFactoryClientResolver::getUriFactory();
-        }
-        return $this->uriFactory;
+        return $this->uriFactory ??= HttpFactoryClientResolver::getUriFactory();
     }
 
     /**
@@ -115,10 +110,7 @@ class OAuth2Client
      */
     public function getRequestFactory(): ?RequestFactoryInterface
     {
-        if (!isset($this->requestFactory)) {
-            $this->requestFactory = HttpFactoryClientResolver::getRequestFactory();
-        }
-        return $this->requestFactory;
+        return $this->requestFactory ??= HttpFactoryClientResolver::getRequestFactory();
     }
 
     /**

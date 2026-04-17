@@ -26,7 +26,7 @@ try {
     $request = $oauthServer->createNewServerRequest();
     $uri = $request->getUri();
     if (preg_match('~^/authorize/*$~', $uri->getPath()) || preg_match('~^/token/*$~', $uri->getPath())) {
-        ['grant' => $grant, 'parameters' => $parameters] = $oauthServer->getDefinitions($request);
+        $oauthRequest = $oauthServer->parse($request);
         $response = $oauthServer
             ->getResponseFactory()
             ->createResponse(200)
@@ -34,9 +34,9 @@ try {
         // do any validation
         $body = null;
         $streamFactory = $oauthServer->getStreamFactory();
-        if ($grant instanceof AuthorizationCodeGrantInterface) {
+        if ($oauthRequest->getGrant() instanceof AuthorizationCodeGrantInterface) {
             $body = [
-                $grant->getGrantTypeValue() => base64_encode(random_bytes(64)) // just random example
+                $oauthRequest->getGrant()->getGrantTypeValue() => base64_encode(random_bytes(64)) // just random example
             ];
             if (isset($parameters['state'])) {
                 $body['state'] = $parameters['state'];

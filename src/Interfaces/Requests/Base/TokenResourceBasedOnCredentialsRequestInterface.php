@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace TrayDigita\OAuth2\Interfaces\Requests;
+namespace TrayDigita\OAuth2\Interfaces\Requests\Base;
 
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\PasswordParameterInterface;
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\UsernameParameterInterface;
@@ -13,9 +13,9 @@ use TrayDigita\OAuth2\Interfaces\Parameters\Requests\UsernameParameterInterface;
  *
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-11.2.2
  *
- * @template-extends TokenRequestInterface<"password">
+ * @template-extends TokenRequestInterface<"password", "grant_type", "password">
  */
-interface AuthorizationOwnerResourceBasedOnCredentialsRequestInterface extends
+interface TokenResourceBasedOnCredentialsRequestInterface extends
     TokenRequestInterface,
     UsernameParameterInterface,
     PasswordParameterInterface

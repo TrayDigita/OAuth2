@@ -1,10 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace TrayDigita\OAuth2\Interfaces\Requests;
+namespace TrayDigita\OAuth2\Interfaces\Requests\Base;
 
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\GrantTypeParameterInterface;
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\RedirectUriParameterInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\OAuth2RequestInterface;
 use TrayDigita\OAuth2\Interfaces\Scratches\PreparationRequestInterface;
 use TrayDigita\OAuth2\Interfaces\Scratches\TokenInterface;
 
@@ -13,14 +14,17 @@ use TrayDigita\OAuth2\Interfaces\Scratches\TokenInterface;
  * The Initial Registry Contents
  *
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-11.2.2
- *
  * @template-covariant GrantType of non-empty-string
- * @template-extends GrantTypeParameterInterface<GrantType>
+ * @template-covariant GrantTypeKey of non-empty-string
+ * @template-covariant GrantTypeValue of non-empty-string
+ *
+ * @template-extends OAuth2RequestInterface<GrantType, GrantTypeKey, GrantTypeValue>
  */
 interface TokenRequestInterface extends
     TokenInterface,
     GrantTypeParameterInterface,
     RedirectUriParameterInterface,
-    PreparationRequestInterface
+    PreparationRequestInterface,
+    OAuth2RequestInterface
 {
 }

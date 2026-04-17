@@ -3,11 +3,14 @@ declare(strict_types=1);
 
 namespace TrayDigita\OAuth2\Grants;
 
+use Psr\Http\Message\ServerRequestInterface;
 use TrayDigita\OAuth2\Abstracts\AbstractGrant;
+use TrayDigita\OAuth2\Clients\Requests\ImplicitRequest;
 use TrayDigita\OAuth2\Enums\RequestType;
 use TrayDigita\OAuth2\Exceptions\StrictParameterException;
 use TrayDigita\OAuth2\Exceptions\UnsatisfiedGrantParameterException;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ImplicitGrantInterface;
+use function is_string;
 
 /**
  * ## The implicit grant type is used to obtain access tokens
@@ -212,5 +215,58 @@ class Implicit extends AbstractGrant implements ImplicitGrantInterface
     public function getGrantTypeValue(): string
     {
         return 'token';
+    }
+
+    /**
+     * @inheritdoc
+     * @return ImplicitRequest<ClientId>
+     * @throws StrictParameterException if the request type is not authorization request
+     * @throws UnsatisfiedGrantParameterException if any required parameter is missing or invalid
+     */
+    protected function convertOAuth2Request(
+        ServerRequestInterface $request,
+        RequestType            $requestType,
+        array                  $parameters
+    ): ImplicitRequest {
+        if ($requestType !== RequestType::AUTHORIZATION) {
+            throw new StrictParameterException(
+                'Implicit grant type only supports authorization request'
+            );
+        }
+        $clientId = $parameters['client_id'] ?? null;
+        if (!is_string($clientId) || $clientId === '') {
+            throw new UnsatisfiedGrantParameterException(
+                'client_id is required and must be a non-empty string'
+            );
+        }
+        /** @noinspection DuplicatedCode */
+        $redirectUri = $parameters['redirect_uri'] ?? null;
+        if (isset($redirectUri) && (!is_string($redirectUri) || $redirectUri === '')) {
+            throw new UnsatisfiedGrantParameterException(
+                'redirect_uri must be a non-empty string if provided'
+            );
+        }
+        $scope = $parameters['scope'] ?? null;
+        if (isset($scope) && !is_string($scope)) {
+            throw new UnsatisfiedGrantParameterException(
+                'scope must be a string if provided'
+            );
+        }
+        $state = $parameters['state'] ?? null;
+        if (isset($state) && !is_string($state)) {
+            throw new UnsatisfiedGrantParameterException(
+                'state must be a string if provided'
+            );
+        }
+        return new ImplicitRequest(
+            $this,
+            $requestType,
+            $request,
+            $clientId,
+            $redirectUri,
+            $scope,
+            $state,
+            $parameters
+        );
     }
 }

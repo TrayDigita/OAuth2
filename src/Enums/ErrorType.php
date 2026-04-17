@@ -135,18 +135,18 @@ enum ErrorType: string
     public function getDescription() : string
     {
         return match ($this) {
-            self::INVALID_REQUEST => 'Invalid Request',
-            self::UNAUTHORIZED_CLIENT => "Authentication Failed",
-            self::ACCESS_DENIED => 'Access Denied',
+            self::INVALID_REQUEST           => 'Invalid Request',
+            self::UNAUTHORIZED_CLIENT       => 'Unauthorized Client',
+            self::ACCESS_DENIED             => 'Access Denied',
             self::UNSUPPORTED_RESPONSE_TYPE => 'Unsupported Response Type',
-            self::INVALID_SCOPE => 'Invalid Scope',
-            self::SERVER_ERROR => 'Internal Server Error',
-            self::TEMPORARILY_UNAVAILABLE => 'Resource Temporary Unavailable',
-            self::INVALID_GRANT => 'Invalid Grant', // other
-            self::INVALID_CLIENT => 'Client Authentication failed',
-            self::UNSUPPORTED_GRANT_TYPE => 'Unsupported Grant Type',
-            self::INVALID_STATE => 'Invalid State',
-            self::OTHER => 'Unknown Error',
+            self::INVALID_SCOPE             => 'Invalid Scope',
+            self::SERVER_ERROR              => 'Internal Server Error',
+            self::TEMPORARILY_UNAVAILABLE   => 'Resource Temporary Unavailable',
+            self::INVALID_GRANT             => 'Invalid Grant',
+            self::INVALID_CLIENT            => 'Client Authentication Failed',
+            self::UNSUPPORTED_GRANT_TYPE    => 'Unsupported Grant Type',
+            self::INVALID_STATE             => 'Invalid State',
+            self::OTHER                     => 'Unknown Error',
         };
     }
 

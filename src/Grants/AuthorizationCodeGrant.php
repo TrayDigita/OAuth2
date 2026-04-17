@@ -3,10 +3,14 @@ declare(strict_types=1);
 
 namespace TrayDigita\OAuth2\Grants;
 
+use Psr\Http\Message\ServerRequestInterface;
 use TrayDigita\OAuth2\Abstracts\AbstractGrant;
+use TrayDigita\OAuth2\Clients\Requests\AuthorizationCodeRequest;
 use TrayDigita\OAuth2\Enums\RequestType;
 use TrayDigita\OAuth2\Exceptions\UnsatisfiedGrantParameterException;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\AuthorizationCodeGrantInterface;
+use function is_string;
+use function trim;
 
 /**
  * ## The authorization code is obtained by using an authorization server
@@ -201,15 +205,17 @@ class AuthorizationCodeGrant extends AbstractGrant implements AuthorizationCodeG
      * If the "redirect_uri" parameter was included in the authorization request,
      * the client MUST include the "redirect_uri" parameter with the same value as the authorization
      *
-     * @return list<non-empty-string>&list<'grant_type','code', 'client_id'|string>
+     * @return list<non-empty-string>&list<'grant_type','client_id'>
      */
     public function getRequiredClientRequestParameters(RequestType $requestType): array
     {
         $grants = [
             'grant_type',
+            'client_id',
         ];
         if ($requestType === RequestType::TOKEN) {
-            $grants[] = 'client_id';
+            $grants[] = 'code';
+            $grants[] = 'client_secret';
         }
         return $grants;
     }
@@ -230,5 +236,77 @@ class AuthorizationCodeGrant extends AbstractGrant implements AuthorizationCodeG
     public function getGrantTypeValue(): string
     {
         return 'code';
+    }
+
+    /**
+     * @inheritdoc
+     * @return AuthorizationCodeRequest<non-empty-string>
+     * @throws UnsatisfiedGrantParameterException if any required parameter is missing or invalid.
+     */
+    protected function convertOAuth2Request(
+        ServerRequestInterface $request,
+        RequestType $requestType,
+        array $parameters
+    ): AuthorizationCodeRequest {
+        $clientId = $parameters['client_id']??null;
+        if (!is_string($clientId) || $clientId === '') {
+            throw new UnsatisfiedGrantParameterException(
+                'client_id is required and must be a non-empty string'
+            );
+        }
+
+        $clientSecret = null;
+        $code = null;
+        if ($requestType === RequestType::TOKEN) {
+            if (!isset($parameters['code'])
+                || !is_string($parameters['code'])
+                || trim($parameters['code']) === ''
+            ) {
+                throw new UnsatisfiedGrantParameterException(
+                    'The "code" parameter is required and must be a non-empty string for token requests.'
+                );
+            }
+            if (!isset($parameters['client_secret'])
+                || !is_string($parameters['client_secret'])
+                || trim($parameters['client_secret']) === ''
+            ) {
+                throw new UnsatisfiedGrantParameterException(
+                    'The "client_secret" parameter is required and must be a non-empty string for token requests.'
+                );
+            }
+            $code = $parameters['code'];
+            $clientSecret = $parameters['client_secret'];
+        }
+        /** @noinspection DuplicatedCode */
+        $redirectUri = $parameters['redirect_uri']??null;
+        if (isset($redirectUri) && (!is_string($redirectUri) || $redirectUri === '')) {
+            throw new UnsatisfiedGrantParameterException(
+                'redirect_uri must be a non-empty string if provided'
+            );
+        }
+        $scope = $parameters['scope']??null;
+        if (isset($scope) && !is_string($scope)) {
+            throw new UnsatisfiedGrantParameterException(
+                'scope must be a string if provided'
+            );
+        }
+        $state = $parameters['state']??null;
+        if (isset($state) && !is_string($state)) {
+            throw new UnsatisfiedGrantParameterException(
+                'state must be a string if provided'
+            );
+        }
+        return new AuthorizationCodeRequest(
+            $this,
+            $requestType,
+            $request,
+            $clientId,
+            $clientSecret,
+            $code,
+            $redirectUri,
+            $scope,
+            $state,
+            $parameters
+        );
     }
 }

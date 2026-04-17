@@ -1,6 +1,6 @@
 # OAuth2 Server & Client Library For PHP
 
-**PSR-(3/7/18/17) compliant OAuth 2.0 library for PHP.**
+**PSR-(7/18/17) compliant OAuth 2.0 library for PHP.**
 
 Complete implementation & separation complex data structures into separate classes.
 Support Server & Client side of the protocol.
@@ -28,7 +28,7 @@ Support Server & Client side of the protocol.
 ```
 
 ## Todo
-
+- [ ] Implementing [OAuth2 Requests](src/Clients/Requests)
 - [ ] Completing [Abstract Client Provider](src/Abstracts/AbstractClientProvider.php)
 - [ ] Creating Sample Provider (e.g. GitHub, Google, Facebook, etc.)
 - [ ] Creating Sample Server (e.g. Authorization Server, Resource Server, etc.)

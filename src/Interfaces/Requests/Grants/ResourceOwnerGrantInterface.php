@@ -74,9 +74,9 @@ use TrayDigita\OAuth2\Enums\RequestType;
  * @see https://datatracker.ietf.org/doc/html/rfc6749#section-4.3.2
  * @see https://datatracker.ietf.org/doc/html/rfc6749#section-4.3
  *
- * @template-extends GrantTypeToken<"password", "grant_type", "password">
+ * @template-extends GrantTypeTokenInterface<"password", "grant_type", "password">
  */
-interface ResourceOwnerGrantInterface extends GrantTypeToken
+interface ResourceOwnerGrantInterface extends GrantTypeTokenInterface
 {
     /**
      * Grant name constant

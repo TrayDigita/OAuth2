@@ -3,10 +3,13 @@ declare(strict_types=1);
 
 namespace TrayDigita\OAuth2\Grants;
 
+use Psr\Http\Message\ServerRequestInterface;
 use TrayDigita\OAuth2\Abstracts\AbstractGrant;
 use TrayDigita\OAuth2\Enums\RequestType;
+use TrayDigita\OAuth2\Exceptions\OperationNotPermittedException;
 use TrayDigita\OAuth2\Exceptions\UnsatisfiedGrantParameterException;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ResourceOwnerGrantInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\OAuth2RequestInterface;
 
 /**
  * The resource owner password credentials (i.e., username and password)
@@ -151,5 +154,19 @@ class ResourceOwnerPasswordCredentialsGrant extends AbstractGrant implements Res
     public function getGrantTypeKey(): string
     {
         return 'grant_type';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function convertOAuth2Request(
+        ServerRequestInterface $request,
+        RequestType $requestType,
+        array $parameters
+    ): OAuth2RequestInterface {
+        // TODO: Implement convertOAuth2Request() method.
+        throw new OperationNotPermittedException(
+            'Conversion not yet implemented'
+        );
     }
 }

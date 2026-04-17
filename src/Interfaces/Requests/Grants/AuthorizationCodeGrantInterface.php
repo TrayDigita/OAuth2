@@ -104,12 +104,12 @@ use TrayDigita\OAuth2\Enums\RequestType;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2 Authorization Response
  * @see https://datatracker.ietf.org/doc/html/rfc2616 RFC2616 - HTTP
  *
- * @template-extends GrantTypeAuthorization<"authorization_code", "response_type", "code">
- * @template-extends GrantTypeToken<"authorization_code", "response_type", "code">
+ * @template-extends GrantTypeAuthorizationInterface<"authorization_code", "response_type", "code">
+ * @template-extends GrantTypeTokenInterface<"authorization_code", "response_type", "code">
  */
 interface AuthorizationCodeGrantInterface extends
-    GrantTypeAuthorization,
-    GrantTypeToken
+    GrantTypeAuthorizationInterface,
+    GrantTypeTokenInterface
 {
     /**
      * Grant name constant
@@ -139,7 +139,7 @@ interface AuthorizationCodeGrantInterface extends
      * the authorization grant type being used.
      *
      * @param RequestType $requestType The type of the request (e.g., authorization request, token request, etc.)
-     * @return list<'grant_type','code'>&list<non-empty-string>
+     * @return list<non-empty-string>&list<'grant_type','client_id'>
      */
     public function getRequiredClientRequestParameters(RequestType $requestType): array;
 

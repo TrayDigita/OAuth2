@@ -6,6 +6,7 @@ namespace TrayDigita\OAuth2\Interfaces\Requests\Grants;
 use Psr\Http\Message\ServerRequestInterface;
 use TrayDigita\OAuth2\Enums\RequestType;
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\GrantTypeParameterInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\OAuth2RequestInterface;
 
 /**
  * @template-covariant GrantType of non-empty-string
@@ -149,16 +150,15 @@ interface GrantParametersInterface extends GrantTypeParameterInterface
      * Parse the incoming request,
      * convert into client request parameter.
      * This method can be used as
-     *
      * @param ServerRequestInterface $request
-     * @return array<non-empty-string, mixed> parsed required response
+     * @return OAuth2RequestInterface<GrantType, GrantTypeKey, GrantTypeValue> parsed required response
      * @throws \TrayDigita\OAuth2\Exceptions\Response\OAuth2ResponseErrorException
      * if the request is invalid or any required parameter is missing
      * @noinspection PhpFullyQualifiedNameUsageInspection
      */
     public function parseServerRequest(
         ServerRequestInterface $request
-    ) : array;
+    ) : OAuth2RequestInterface;
 
     /**
      * Check if the incoming request is supported by the grant type.

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace TrayDigita\OAuth2\Interfaces\Requests;
+namespace TrayDigita\OAuth2\Interfaces\Requests\Base;
 
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\ClientIdParameterInterface;
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\ClientSecretParameterInterface;
@@ -13,7 +13,10 @@ use TrayDigita\OAuth2\Interfaces\Parameters\Requests\ClientSecretParameterInterf
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-11.2.2
  *
  * @template-covariant GrantType of non-empty-string
- * @template-extends TokenRequestInterface<GrantType>
+ * @template-covariant GrantTypeKey of non-empty-string
+ * @template-covariant GrantTypeValue of non-empty-string
+ *
+ * @template-extends TokenRequestInterface<GrantType, GrantTypeKey, GrantTypeValue>
  */
 interface TokenBasedOnCredentialsRequestInterface extends
     TokenRequestInterface,

@@ -63,7 +63,7 @@ use TrayDigita\OAuth2\Enums\RequestType;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.2 Implicit Grant (RFC 6749, §4.2)
  *
  * @template-covariant ClientId of non-empty-string
- * @extends GrantTypeAuthorization<"implicit">
+ * @extends GrantTypeAuthorizationInterface<"implicit">
  * @note
  * For redirect URI recommended using (#)/url fragment to prevent the access token from being exposed
  *      to the resource owner and other applications.
@@ -71,9 +71,9 @@ use TrayDigita\OAuth2\Enums\RequestType;
  * instead of `https://client.example.com/cb?access_token=ACCESS_TOKEN&state=xyz`
  *
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.2.1
- * @template-extends GrantTypeAuthorization<"implicit", "response_type", "token">
+ * @template-extends GrantTypeAuthorizationInterface<"implicit", "response_type", "token">
  */
-interface ImplicitGrantInterface extends GrantTypeAuthorization
+interface ImplicitGrantInterface extends GrantTypeAuthorizationInterface
 {
     /**
      * Grant name constant

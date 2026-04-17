@@ -1,6 +1,6 @@
 {
     "name": "traydigita/oauth2",
-    "description": "OAuth2 library for PHP, providing PSR-3/7/17/18 compliance, a simple and flexible way to integrate OAuth2 authentication into your applications.",
+    "description": "OAuth2 library for PHP, providing PSR-7/17/18 compliance, a simple and flexible way to integrate OAuth2 authentication into your applications.",
     "type": "library",
     "homepage": "https://github.com/TrayDigita/OAuth2",
     "license": "MIT",
@@ -11,10 +11,9 @@
         "rfc6749",
         "rfc-6749",
         "oauth",
-        "psr-18",
         "psr-7",
         "psr-17",
-        "psr-3",
+        "psr-18",
         "php"
     ],
     "authors": [
@@ -29,8 +28,7 @@
         "psr/http-client": "^1.0",
         "psr/http-message": "^1.0 || ^2.0",
         "psr/http-factory": "^1.0",
-        "psr/cache": "^1.0 || ^2.0 || ^3.0",
-        "psr/log": "^1.0 || ^2.0 || ^3.0"
+        "psr/cache": "^1.0 || ^2.0 || ^3.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
@@ -43,7 +41,10 @@
         "symfony/http-client": "^6.4 || ^7.0 || ^v8.0"
     },
     "suggest": {
-        "guzzlehttp/guzzle": "For PSR-18 HTTP client implementation"
+        "guzzlehttp/guzzle": "For PSR-18 HTTP client implementation",
+        "nyholm/psr7": "For PSR-7 HTTP message implementation",
+        "laminas/laminas-diactoros": "For PSR-7 HTTP message implementation",
+        "symfony/http-client": "For PSR-18 HTTP client implementation"
     },
     "scripts": {
         "test": "./vendor/bin/phpunit --config=phpunit.xml.dist",
@@ -64,7 +65,6 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "TrayDigita\\OAuth2\\": "src/",
             "TrayDigita\\OAuth2Tests\\": "tests/"
         }
     }

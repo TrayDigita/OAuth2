@@ -17,6 +17,15 @@ use function class_exists;
 class HttpFactoryClientResolver
 {
     /**
+     * ClientInterface instance used for making HTTP requests.
+     * This can be set manually using the setClient method,
+     * or it will be automatically resolved based on available implementations.
+     *
+     * @var ClientInterface $client
+     */
+    private static ClientInterface $client;
+
+    /**
      * @var array<non-empty-string, mixed> $storage Storage for custom factory instances
      */
     private static array $storage = [
@@ -173,7 +182,7 @@ class HttpFactoryClientResolver
             self::$psr17Factory ??= new \Nyholm\Psr7\Factory\Psr17Factory();
             return self::$storage[ResponseFactoryInterface::class] = self::$psr17Factory;
         }
-        if (class_exists('Laminas\Diactoros\StreamFactory')) {
+        if (class_exists('Laminas\Diactoros\ResponseFactory')) {
             return self::$storage[ResponseFactoryInterface::class] = new \Laminas\Diactoros\ResponseFactory();
         }
         throw new UnsatisfiedDependencyException(
@@ -263,6 +272,16 @@ class HttpFactoryClientResolver
     }
 
     /**
+     * Set a custom ClientInterface implementation.
+     *
+     * @param ClientInterface $client
+     */
+    public static function setClient(ClientInterface $client): void
+    {
+        self::$client = $client;
+    }
+
+    /**
      * Get a ClientInterface implementation.
      *
      * @return ClientInterface
@@ -270,11 +289,14 @@ class HttpFactoryClientResolver
      */
     public static function getClient(): ClientInterface
     {
+        if (isset(self::$client)) {
+            return self::$client;
+        }
         if (class_exists('GuzzleHttp\Client')) {
-            return new \GuzzleHttp\Client();
+            return self::$client = new \GuzzleHttp\Client();
         }
         if (class_exists('Symfony\Component\HttpClient\Psr18Client')) {
-            return new \Symfony\Component\HttpClient\Psr18Client(
+            return self::$client = new \Symfony\Component\HttpClient\Psr18Client(
                 responseFactory: self::getResponseFactory(),
                 streamFactory: self::getStreamFactory()
             );
