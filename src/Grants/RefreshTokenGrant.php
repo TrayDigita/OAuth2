@@ -58,7 +58,7 @@ use TrayDigita\OAuth2\Interfaces\Requests\Grants\RefreshTokenGrantInterface;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-6 Refreshing an Access Token (RFC 6749, §6)
  * @see https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1 Example Password Authentication
  *
- * @template-extends AbstractGrant<"refresh_token">
+ * @template-extends AbstractGrant<"refresh_token", "grant_type", "refresh_token">
  */
 class RefreshTokenGrant extends AbstractGrant implements RefreshTokenGrantInterface
 {
@@ -74,7 +74,7 @@ class RefreshTokenGrant extends AbstractGrant implements RefreshTokenGrantInterf
     /**
      * @inheritdoc
      */
-    public function getOptionalParameters(RequestType $requestType): array
+    public function getOptionalClientRequestParameters(RequestType $requestType): array
     {
         /**
          * The scope of the access request as described by
@@ -114,11 +114,20 @@ class RefreshTokenGrant extends AbstractGrant implements RefreshTokenGrantInterf
      * @inheritdoc
      * @return list<non-empty-string>&list<'grant_type','refresh_token'>
      */
-    public function getRequiredParameters(RequestType $requestType): array
+    public function getRequiredClientRequestParameters(RequestType $requestType): array
     {
         return [
             'grant_type',
             'refresh_token'
         ];
+    }
+
+    /**
+     * @inheritdoc
+     * @return "grant_type"
+     */
+    public function getGrantTypeKey(): string
+    {
+        return 'grant_type';
     }
 }

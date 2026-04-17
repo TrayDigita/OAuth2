@@ -63,7 +63,7 @@ use TrayDigita\OAuth2\Enums\RequestType;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.2 Implicit Grant (RFC 6749, §4.2)
  *
  * @template-covariant ClientId of non-empty-string
- * @extends GrantTypeAuthorizationRequest<"implicit">
+ * @extends GrantTypeAuthorization<"implicit">
  * @note
  * For redirect URI recommended using (#)/url fragment to prevent the access token from being exposed
  *      to the resource owner and other applications.
@@ -71,8 +71,9 @@ use TrayDigita\OAuth2\Enums\RequestType;
  * instead of `https://client.example.com/cb?access_token=ACCESS_TOKEN&state=xyz`
  *
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.2.1
+ * @template-extends GrantTypeAuthorization<"implicit", "response_type", "token">
  */
-interface ImplicitGrantInterface extends GrantTypeAuthorizationRequest
+interface ImplicitGrantInterface extends GrantTypeAuthorization
 {
     /**
      * Grant name constant
@@ -82,10 +83,16 @@ interface ImplicitGrantInterface extends GrantTypeAuthorizationRequest
 
     /**
      * @inheritdoc
+     * @return "response_type"
+     */
+    public function getGrantTypeKey(): string;
+
+    /**
+     * @inheritdoc
      * @param RequestType $requestType The type of the request (e.g., authorization request, token request, etc.)
      * @return list<'client_id','response_type'>&list<non-empty-string>
      */
-    public function getRequiredParameters(RequestType $requestType): array;
+    public function getRequiredClientRequestParameters(RequestType $requestType): array;
 
     /**
      * @Inheritdoc
@@ -103,5 +110,9 @@ interface ImplicitGrantInterface extends GrantTypeAuthorizationRequest
      *     ...<TKey, TValue>
      * }
      */
-    public function prepareParameters(RequestType $requestType, array $parameters, array $defaultParameters): array;
+    public function prepareClientRequestParameters(
+        RequestType $requestType,
+        array $parameters,
+        array $defaultParameters
+    ): array;
 }

@@ -23,8 +23,13 @@ namespace TrayDigita\OAuth2\Interfaces\Requests\Grants;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.5
  *
  * @template GrantType of non-empty-string
- * @template-extends GrantTypeTokenRequest<GrantType>
+ * @template-extends GrantTypeToken<GrantType, "grant_type", non-empty-string>
  */
-interface ExtensionsGrantInterface extends GrantTypeTokenRequest
+interface ExtensionsGrantInterface extends GrantTypeToken
 {
+    /**
+     * @inheritdoc
+     * @return "grant_type"
+     */
+    public function getGrantTypeKey(): string;
 }

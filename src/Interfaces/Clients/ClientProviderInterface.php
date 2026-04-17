@@ -8,9 +8,9 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantRequestParametersInterface;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeAuthorizationRequest;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeTokenRequest;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantParametersInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeAuthorization;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeToken;
 use TrayDigita\OAuth2\Interfaces\Responses\AccessTokenResponseInterface;
 use TrayDigita\OAuth2\Interfaces\Responses\AuthorizationResponseInterface;
 
@@ -55,16 +55,18 @@ interface ClientProviderInterface
     /**
      * Check if the client provider supports the specified grant type.
      *
-     * @param GrantRequestParametersInterface<TGrant> $grant The grant request parameters to check.
+     * @param GrantParametersInterface<TGrant, non-empty-string, non-empty-string> $grant
+     *  The grant request parameters to check.
      * @return bool True if the grant type is supported, false otherwise.
      * @template TGrant of non-empty-string
      */
-    public function grantIsSupported(GrantRequestParametersInterface $grant): bool;
+    public function grantIsSupported(GrantParametersInterface $grant): bool;
 
     /**
      * Authorize the client for the specified grant type and parameters.
      *
-     * @param GrantTypeAuthorizationRequest<TGrant> $grant The parameters for the grant request.
+     * @param GrantTypeAuthorization<TGrant, non-empty-string, non-empty-string> $grant
+     * The parameters for the grant request.
      * @param array<string, mixed> $additionalParameters
      * Additional parameters to include in the authorization process.
      * @param RequestFactoryInterface $requestFactory
@@ -90,17 +92,18 @@ interface ClientProviderInterface
      * @see self::grantIsSupported() for checking if the grant type is supported before calling this method.
      */
     public function createAuthorizeRequest(
-        GrantTypeAuthorizationRequest $grant,
-        array                         $additionalParameters,
-        RequestFactoryInterface       $requestFactory,
-        StreamFactoryInterface        $streamFactory,
-        UriFactoryInterface           $uriFactory
+        GrantTypeAuthorization  $grant,
+        array                   $additionalParameters,
+        RequestFactoryInterface $requestFactory,
+        StreamFactoryInterface  $streamFactory,
+        UriFactoryInterface     $uriFactory
     ): RequestInterface;
 
     /**
      * Create a token request for the specified grant type and parameters.
      *
-     * @param GrantTypeTokenRequest<TGrant> $parameters The parameters for the token request.
+     * @param GrantTypeToken<TGrant, non-empty-string, non-empty-string> $parameters
+     * The parameters for the token request.
      * @param array<string, mixed> $additionalParameters
      * Additional parameters to include in the token request.
      * @param RequestFactoryInterface $requestFactory
@@ -126,7 +129,7 @@ interface ClientProviderInterface
      * @see self::grantIsSupported() for checking if the grant type is supported before calling this method.
      */
     public function createRequestToken(
-        GrantTypeTokenRequest   $parameters,
+        GrantTypeToken          $parameters,
         array                   $additionalParameters,
         RequestFactoryInterface $requestFactory,
         StreamFactoryInterface  $streamFactory,
@@ -136,7 +139,7 @@ interface ClientProviderInterface
     /**
      * Store the access token in the cache pool.
      *
-     * @param GrantTypeTokenRequest<non-empty-string> $grantRequestParameters
+     * @param GrantTypeToken<non-empty-string, non-empty-string, non-empty-string> $grantRequestParameters
      *      The parameters of the grant request associated with the access token.
      * @param AccessTokenResponseInterface<non-empty-string, ?string, ?string, ?string> $accessToken
      * The access token to store.
@@ -145,15 +148,15 @@ interface ClientProviderInterface
      * @return void
      */
     public function storeAccessToken(
-        GrantTypeTokenRequest $grantRequestParameters,
+        GrantTypeToken               $grantRequestParameters,
         AccessTokenResponseInterface $accessToken,
-        ?CacheItemPoolInterface $cachePool = null
+        ?CacheItemPoolInterface      $cachePool = null
     ) : void;
 
     /**
      * Store the authorization code in the cache pool.
      *
-     * @param GrantTypeAuthorizationRequest<non-empty-string> $authorizationRequest
+     * @param GrantTypeAuthorization<non-empty-string, non-empty-string, non-empty-string> $authorizationRequest
      *      The parameters of the authorization request associated with the authorization code.
      * @param AuthorizationResponseInterface<non-empty-string, ?string, ?string> $authorizationResponse
      * The authorization response containing the authorization code to store.
@@ -162,8 +165,8 @@ interface ClientProviderInterface
      * @return void
      */
     public function storeAuthorizationCode(
-        GrantTypeAuthorizationRequest $authorizationRequest,
+        GrantTypeAuthorization         $authorizationRequest,
         AuthorizationResponseInterface $authorizationResponse,
-        ?CacheItemPoolInterface $cachePool = null
+        ?CacheItemPoolInterface        $cachePool = null
     ) : void;
 }

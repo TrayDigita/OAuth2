@@ -34,7 +34,8 @@ use function sprintf;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.5
  *
  * @template GrantUri of non-empty-string
- * @template-extends AbstractGrant<GrantUri>
+ * @template GrantTypeValue of non-empty-string
+ * @template-extends AbstractGrant<GrantUri, "grant_type", non-empty-string>
  * @template-implements ExtensionsGrantInterface<GrantUri>
  */
 class ExtensionGrant extends AbstractGrant implements ExtensionsGrantInterface
@@ -65,11 +66,30 @@ class ExtensionGrant extends AbstractGrant implements ExtensionsGrantInterface
     protected $parameterPreparation;
 
     /**
+     * @var callable(string): bool|null $grantTypeCallback
+     */
+    protected $grantTypeCallback;
+
+    /**
+     * @var "grant_type" $grantTypeKey
+     */
+    protected string $grantTypeKey = 'grant_type';
+
+    /**
+     * @var GrantTypeValue $grantTypeValue
+     */
+    protected string $grantTypeValue;
+
+    /**
      * Create new extension grant instance
      * @param GrantUri $grantUri
+     * The key used to identify the grant type in the request parameters, default is "grant_type"
+     * @param string|null $grantTypeValue
+     * The expected value of the grant type parameter, if null, it will be the same
      * @param list<non-empty-string> $requiredParameters
      * @param list<non-empty-string> $optionalParameters
-     * @param ?callable(RequestType, array<string, mixed>, array<string, mixed>): array<string, mixed> $callback
+     * @param ?callable(RequestType, array<string, mixed>, array<string, mixed>): array<string, mixed> $prepareCallback
+     * @param ?callable(string): bool $grantTypeCallback
      * @param bool $strict
      * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.5 Extension Grant (RFC 6749, §4.5)
      */
@@ -78,7 +98,9 @@ class ExtensionGrant extends AbstractGrant implements ExtensionsGrantInterface
         array     $requiredParameters = ['grant_type'], // default accept
         array     $optionalParameters = ['scope', 'state'], // default accept
         bool      $strict = false,
-        ?callable $callback = null
+        ?string   $grantTypeValue = null,
+        ?callable $prepareCallback = null,
+        ?callable $grantTypeCallback = null
     ) {
         $this->type = $grantUri;
         foreach ($requiredParameters as $parameter) {
@@ -117,7 +139,21 @@ class ExtensionGrant extends AbstractGrant implements ExtensionsGrantInterface
         $this->requiredParameters = array_values($requiredParameters);
         $this->optionalParameters = array_values($optionalParameters);
         $this->strict = $strict;
-        $this->parameterPreparation = $callback;
+        $this->parameterPreparation = $prepareCallback;
+        $this->grantTypeCallback = $grantTypeCallback;
+        /**
+         * @var GrantTypeValue $grantTypeValue
+         */
+        $grantTypeValue = $grantTypeValue ?? $grantUri;
+        $this->grantTypeValue = $grantTypeValue;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getGrantTypeKey(): string
+    {
+        return $this->grantTypeKey;
     }
 
     /**
@@ -133,7 +169,7 @@ class ExtensionGrant extends AbstractGrant implements ExtensionsGrantInterface
      * @inheritdoc
      * @return list<non-empty-string>&list<'grant_type'>
      */
-    public function getRequiredParameters(RequestType $requestType): array
+    public function getRequiredClientRequestParameters(RequestType $requestType): array
     {
         /**
          * @var list<non-empty-string>&list<'grant_type'> $list
@@ -145,7 +181,7 @@ class ExtensionGrant extends AbstractGrant implements ExtensionsGrantInterface
     /**
      * @inheritdoc
      */
-    public function getOptionalParameters(RequestType $requestType): array
+    public function getOptionalClientRequestParameters(RequestType $requestType): array
     {
         /**
          * @var list<non-empty-string> $list
@@ -157,8 +193,11 @@ class ExtensionGrant extends AbstractGrant implements ExtensionsGrantInterface
     /**
      * @inheritdoc
      */
-    public function prepareParameters(RequestType $requestType, array $parameters, array $defaultParameters): array
-    {
+    public function prepareClientRequestParameters(
+        RequestType $requestType,
+        array $parameters,
+        array $defaultParameters
+    ): array {
         $defaultParameters['grant_type'] = $this->getGrantType();
         $this->assertRequiredParameters($requestType, [...$defaultParameters, ...$parameters]);
         if (isset($this->parameterPreparation)) {
@@ -172,5 +211,27 @@ class ExtensionGrant extends AbstractGrant implements ExtensionsGrantInterface
         $result = [...$defaultParameters, ...$parameters];
         $result['grant_type'] = $this->getGrantType();
         return $result;
+    }
+
+    /**
+     * @inheritdoc
+     * @return GrantTypeValue
+     */
+    public function getGrantTypeValue(): string
+    {
+        return $this->grantTypeValue;
+    }
+
+    /**
+     * @inheritdoc
+     * @return bool
+     * @phpstan-return ($grantTypeRequest is GrantTypeValue ? true : false)
+     * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.5 Extension Grant (RFC 6749, §4.5)
+     */
+    public function isGrantTypeRequestValid(string $grantTypeRequest): bool
+    {
+        return isset($this->grantTypeCallback)
+            ? ($this->grantTypeCallback)($grantTypeRequest) === true
+            : $grantTypeRequest === $this->getGrantTypeValue();
     }
 }

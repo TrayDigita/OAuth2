@@ -66,7 +66,8 @@ use TrayDigita\OAuth2\Interfaces\Requests\Grants\AuthorizationCodeGrantInterface
  * ### Example Request:
  * <code>
  * GET /authorize?response_type=code&client_id=s6BhdRkqt3&state=xyz
- * &redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb HTTP/1.1
+ * &redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb
+ * HTTP/1.1
  * Host: server.example.com
  * </code>
  *
@@ -107,7 +108,7 @@ use TrayDigita\OAuth2\Interfaces\Requests\Grants\AuthorizationCodeGrantInterface
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2 Authorization Response
  * @see https://datatracker.ietf.org/doc/html/rfc2616 RFC2616 - HTTP
  *
- * @template-extends AbstractGrant<"authorization_code">
+ * @template-extends AbstractGrant<"authorization_code", "response_type", "code">
  */
 class AuthorizationCodeGrant extends AbstractGrant implements AuthorizationCodeGrantInterface
 {
@@ -162,9 +163,20 @@ class AuthorizationCodeGrant extends AbstractGrant implements AuthorizationCodeG
 
     /**
      * @inheritdoc
+     */
+    public function getSupportedRequestTypes(): array
+    {
+        return [
+            RequestType::AUTHORIZATION,
+            RequestType::TOKEN
+        ];
+    }
+
+    /**
+     * @inheritdoc
      * @return list<non-empty-string>&list<'redirect_uri','client_id','scope','state'>
      */
-    public function getOptionalParameters(RequestType $requestType): array
+    public function getOptionalClientRequestParameters(RequestType $requestType): array
     {
         return [
             // REQUIRED, if the "redirect_uri" parameter was included in the
@@ -191,15 +203,32 @@ class AuthorizationCodeGrant extends AbstractGrant implements AuthorizationCodeG
      *
      * @return list<non-empty-string>&list<'grant_type','code', 'client_id'|string>
      */
-    public function getRequiredParameters(RequestType $requestType): array
+    public function getRequiredClientRequestParameters(RequestType $requestType): array
     {
         $grants = [
             'grant_type',
-            'code'
         ];
         if ($requestType === RequestType::TOKEN) {
             $grants[] = 'client_id';
         }
         return $grants;
+    }
+
+    /**
+     * @inheritdoc
+     * @return "response_type"
+     */
+    public function getGrantTypeKey(): string
+    {
+        return 'response_type';
+    }
+
+    /**
+     * @inheritdoc
+     * @return "code"
+     */
+    public function getGrantTypeValue(): string
+    {
+        return 'code';
     }
 }

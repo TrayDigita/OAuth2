@@ -58,7 +58,7 @@ use TrayDigita\OAuth2\Interfaces\Requests\Grants\ClientCredentialsGrantInterface
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.4 Client Credentials Grant (RFC 6749, §4.4)
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.4
  *
- * @template-extends AbstractGrant<"client_credentials">
+ * @template-extends AbstractGrant<"client_credentials", "grant_type", "client_credentials">
  */
 class ClientCredentialsGrant extends AbstractGrant implements ClientCredentialsGrantInterface
 {
@@ -75,7 +75,7 @@ class ClientCredentialsGrant extends AbstractGrant implements ClientCredentialsG
      * @Inheritdoc
      * @return list<non-empty-string>&list<'scope','state'>
      */
-    public function getOptionalParameters(RequestType $requestType): array
+    public function getOptionalClientRequestParameters(RequestType $requestType): array
     {
         /**
          * Optional scope parameter, which is a space-delimited list of scopes that the client is requesting.
@@ -85,5 +85,14 @@ class ClientCredentialsGrant extends AbstractGrant implements ClientCredentialsG
             'scope',
             'state'
         ];
+    }
+
+    /**
+     * @inheritdoc
+     * @return "grant_type"
+     */
+    public function getGrantTypeKey(): string
+    {
+        return 'grant_type';
     }
 }

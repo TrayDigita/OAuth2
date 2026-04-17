@@ -75,7 +75,7 @@ use TrayDigita\OAuth2\Interfaces\Requests\Grants\ImplicitGrantInterface;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.2 Implicit Grant (RFC 6749, §4.2)
  *
  * @template-covariant ClientId of non-empty-string
- * @template-extends AbstractGrant<"implicit">
+ * @template-extends AbstractGrant<"implicit", "response_type", "token">
  * @template-implements ImplicitGrantInterface<ClientId>
  *
  * @note
@@ -98,7 +98,7 @@ class Implicit extends AbstractGrant implements ImplicitGrantInterface
      * @return list<non-empty-string>&list<'client_id','response_type'>
      * /
      */
-    public function getRequiredParameters(RequestType $requestType): array
+    public function getRequiredClientRequestParameters(RequestType $requestType): array
     {
         /**
          * Required grant_type parameter with the value "token".
@@ -140,7 +140,7 @@ class Implicit extends AbstractGrant implements ImplicitGrantInterface
      * @Inheritdoc
      * @return list<non-empty-string>&list<'scope','state'>
      */
-    public function getOptionalParameters(RequestType $requestType): array
+    public function getOptionalClientRequestParameters(RequestType $requestType): array
     {
         /**
          * Optional scope parameter, which is a space-delimited list of scopes that the client is requesting.
@@ -169,11 +169,14 @@ class Implicit extends AbstractGrant implements ImplicitGrantInterface
      *      ...<TKey, TValue>
      *  }
      */
-    public function prepareParameters(RequestType $requestType, array $parameters, array $defaultParameters): array
-    {
+    public function prepareClientRequestParameters(
+        RequestType $requestType,
+        array       $parameters,
+        array       $defaultParameters
+    ): array {
         $parameters['response_type'] = 'token';
         $parameters['grant_type'] = $this->getGrantType();
-        $parameters = parent::prepareParameters($requestType, $parameters, $defaultParameters);
+        $parameters = parent::prepareClientRequestParameters($requestType, $parameters, $defaultParameters);
 
         // replace
         $parameters['response_type'] = 'token';
@@ -191,5 +194,23 @@ class Implicit extends AbstractGrant implements ImplicitGrantInterface
          * } $parameters
          */
         return $parameters;
+    }
+
+    /**
+     * @inheritdoc
+     * @return "response_type"
+     */
+    public function getGrantTypeKey(): string
+    {
+        return 'response_type';
+    }
+
+    /**
+     * @inheritdoc
+     * @return "token"
+     */
+    public function getGrantTypeValue(): string
+    {
+        return 'token';
     }
 }

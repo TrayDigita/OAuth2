@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace TrayDigita\OAuth2\Enums;
 
+use function strtolower;
+use function trim;
+
 /**
  * Error type
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1
@@ -11,14 +14,30 @@ enum ErrorType: string
 {
     /**
      * The request is missing a required parameter, includes an
-     * invalid parameter value, includes a parameter more than
-     * once, or is otherwise malformed.
+     * unsupported parameter value (other than grant type),
+     * repeats a parameter, includes multiple credentials,
+     * utilizes more than one mechanism for authenticating the
+     * client, or is otherwise malformed.
      */
     case INVALID_REQUEST = 'invalid_request';
 
     /**
-     * The client is not authorized to request an authorization
-     * code using this method.
+     * Client authentication failed (e.g., unknown client, no
+     * client authentication included, or unsupported
+     * authentication method).  The authorization server MAY
+     * return an HTTP 401 (Unauthorized) status code to indicate
+     * which HTTP authentication schemes are supported.  If the
+     * client attempted to authenticate via the "Authorization"
+     * request header field, the authorization server MUST
+     * respond with an HTTP 401 (Unauthorized) status code and
+     * include the "WWW-Authenticate" response header field
+     * matching the authentication scheme used by the client.
+     */
+    case INVALID_CLIENT = 'invalid_client';
+
+    /**
+     * The authenticated client is not authorized to use this
+     * authorization grant type
      */
     case UNAUTHORIZED_CLIENT = 'unauthorized_client';
 
@@ -35,9 +54,22 @@ enum ErrorType: string
     case UNSUPPORTED_RESPONSE_TYPE = 'unsupported_response_type';
 
     /**
-     * The requested scope is invalid, unknown, or malformed.
+     * The authorization grant type is not supported by the
+     * authorization server.
+     */
+    case UNSUPPORTED_GRANT_TYPE = 'unsupported_grant_type';
+
+    /**
+     * The requested scope is invalid, unknown, malformed, or
+     * exceeds the scope granted by the resource owner.
      */
     case INVALID_SCOPE = 'invalid_scope';
+
+    /**
+     * The requested state is invalid, unknown, malformed, or
+     * exceeds the scope granted by the resource owner.
+     */
+    case INVALID_STATE = 'invalid_state';
 
     /**
      * The authorization server encountered an unexpected
@@ -79,6 +111,7 @@ enum ErrorType: string
      */
     public static function fromError(string $error) : self
     {
+        $error = strtolower(trim($error));
         return match ($error) {
             ErrorType::INVALID_REQUEST->value => ErrorType::INVALID_REQUEST,
             ErrorType::UNAUTHORIZED_CLIENT->value => ErrorType::UNAUTHORIZED_CLIENT,
@@ -87,6 +120,9 @@ enum ErrorType: string
             ErrorType::INVALID_SCOPE->value => ErrorType::INVALID_SCOPE,
             ErrorType::SERVER_ERROR->value => ErrorType::SERVER_ERROR,
             ErrorType::TEMPORARILY_UNAVAILABLE->value => ErrorType::TEMPORARILY_UNAVAILABLE,
+            ErrorType::INVALID_CLIENT->value => ErrorType::INVALID_CLIENT,
+            ErrorType::UNSUPPORTED_GRANT_TYPE->value => ErrorType::UNSUPPORTED_GRANT_TYPE,
+            ErrorType::INVALID_STATE->value => ErrorType::INVALID_STATE,
             default => ErrorType::OTHER,
         };
     }
@@ -107,6 +143,9 @@ enum ErrorType: string
             self::SERVER_ERROR => 'Internal Server Error',
             self::TEMPORARILY_UNAVAILABLE => 'Resource Temporary Unavailable',
             self::INVALID_GRANT => 'Invalid Grant', // other
+            self::INVALID_CLIENT => 'Client Authentication failed',
+            self::UNSUPPORTED_GRANT_TYPE => 'Unsupported Grant Type',
+            self::INVALID_STATE => 'Invalid State',
             self::OTHER => 'Unknown Error',
         };
     }
@@ -121,9 +160,11 @@ enum ErrorType: string
         return match ($this) {
             self::INVALID_REQUEST,
             self::UNSUPPORTED_RESPONSE_TYPE,
+            self::UNSUPPORTED_GRANT_TYPE,
+            self::INVALID_STATE,
             self::INVALID_SCOPE, self::INVALID_GRANT => 400,
             self::UNAUTHORIZED_CLIENT,
-            self::ACCESS_DENIED => 401,
+            self::ACCESS_DENIED, self::INVALID_CLIENT => 401,
             self::SERVER_ERROR => 500,
             self::TEMPORARILY_UNAVAILABLE => 503,
             self::OTHER => null, // 520 is unknown

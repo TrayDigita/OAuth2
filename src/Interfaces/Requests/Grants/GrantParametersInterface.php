@@ -3,14 +3,17 @@ declare(strict_types=1);
 
 namespace TrayDigita\OAuth2\Interfaces\Requests\Grants;
 
+use Psr\Http\Message\ServerRequestInterface;
 use TrayDigita\OAuth2\Enums\RequestType;
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\GrantTypeParameterInterface;
 
 /**
  * @template-covariant GrantType of non-empty-string
+ * @template-covariant GrantTypeKey of non-empty-string
+ * @template-covariant GrantTypeValue of non-empty-string
  * @template-extends GrantTypeParameterInterface<GrantType>
  */
-interface GrantRequestParametersInterface extends GrantTypeParameterInterface
+interface GrantParametersInterface extends GrantTypeParameterInterface
 {
     /**
      * The grant name for identifier
@@ -26,6 +29,20 @@ interface GrantRequestParametersInterface extends GrantTypeParameterInterface
      * @return GrantType
      */
     public function getGrantType() : string;
+
+    /**
+     * Grant type key (query parameter key) to send
+     *
+     * @return GrantTypeKey key for query parameter : eg: grant_type
+     */
+    public function getGrantTypeKey() : string;
+
+    /**
+     * Grant type value (query parameter value) to send
+     *
+     * @return GrantTypeValue value for query parameter : eg: authorization_code
+     */
+    public function getGrantTypeValue(): string;
 
     /**
      * Supported request types for the grant type, which can be either "authorization" or "token".
@@ -45,7 +62,7 @@ interface GrantRequestParametersInterface extends GrantTypeParameterInterface
      *
      * @return list<non-empty-string>&list<'grant_type'>
      */
-    public function getRequiredParameters(RequestType $requestType): array;
+    public function getRequiredClientRequestParameters(RequestType $requestType): array;
 
     /**
      * Optional parameters for the grant type, excluding the "grant_type" parameter.
@@ -57,7 +74,7 @@ interface GrantRequestParametersInterface extends GrantTypeParameterInterface
      *
      * @return list<non-empty-string>
      */
-    public function getOptionalParameters(RequestType $requestType): array;
+    public function getOptionalClientRequestParameters(RequestType $requestType): array;
 
     /**
      * Whether the grant type requires strict parameter checking.
@@ -66,7 +83,7 @@ interface GrantRequestParametersInterface extends GrantTypeParameterInterface
      *
      * @return bool
      */
-    public function isStrictParameter(): bool;
+    public function isStrictClientRequestParameter(): bool;
 
     /**
      * Whether the parameter is allowed for the grant type.
@@ -76,7 +93,7 @@ interface GrantRequestParametersInterface extends GrantTypeParameterInterface
      * @param mixed $value The parameter value
      * @return bool True if the parameter is allowed, false otherwise
      */
-    public function isAllowedParameter(RequestType $requestType, string $parameter, mixed $value): bool;
+    public function isClientParameterSatisfied(RequestType $requestType, string $parameter, mixed $value): bool;
 
     /**
      * Prepare parameter body
@@ -102,11 +119,62 @@ interface GrantRequestParametersInterface extends GrantTypeParameterInterface
      *      if the grant type is not allowed to prepare parameters
      * @noinspection PhpFullyQualifiedNameUsageInspection
      */
-    public function prepareParameters(
+    public function prepareClientRequestParameters(
         RequestType $requestType,
         array $parameters,
         array $defaultParameters
     ): array;
+
+    /**
+     * check if grant type valid
+     *
+     * @param string $grantTypeRequest
+     * @return bool
+     * @phpstan-return ($grantTypeRequest is GrantTypeValue ? true : false)
+     */
+    public function isGrantTypeRequestValid(string $grantTypeRequest) : bool;
+
+    /**
+     * Get the request type from the server request.
+     *
+     * @param ServerRequestInterface $request The incoming server request.
+     * @return RequestType The request type (authorization or token).
+     * @throws \TrayDigita\OAuth2\Exceptions\UnsupportedOperationException
+     * if the request type is not supported by the grant type.
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     */
+    public function getServerRequestType(ServerRequestInterface $request) : RequestType;
+
+    /**
+     * Parse the incoming request,
+     * convert into client request parameter.
+     * This method can be used as
+     *
+     * @param ServerRequestInterface $request
+     * @return array<non-empty-string, mixed> parsed required response
+     * @throws \TrayDigita\OAuth2\Exceptions\Response\OAuth2ResponseErrorException
+     * if the request is invalid or any required parameter is missing
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     */
+    public function parseServerRequest(
+        ServerRequestInterface $request
+    ) : array;
+
+    /**
+     * Check if the incoming request is supported by the grant type.
+     *
+     * @param ServerRequestInterface $request The incoming server request to check.
+     * @return bool True if the request is supported, false otherwise.
+     */
+    public function isSupportedRequest(ServerRequestInterface $request) : bool;
+
+    /**
+     * Find the grant type from the incoming request.
+     *
+     * @param ServerRequestInterface $request The incoming server request to check.
+     * @return GrantType|null The grant type if found, null otherwise.
+     */
+    public function findGrantType(ServerRequestInterface $request) : ?string;
 
     /**
      * Return the string representation of the grant type, which is the same as the grant type parameter value.

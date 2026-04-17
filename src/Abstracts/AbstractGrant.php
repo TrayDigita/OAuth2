@@ -3,17 +3,23 @@ declare(strict_types=1);
 
 namespace TrayDigita\OAuth2\Abstracts;
 
+use Psr\Http\Message\ServerRequestInterface;
+use TrayDigita\OAuth2\Enums\ErrorType;
 use TrayDigita\OAuth2\Enums\RequestType;
+use TrayDigita\OAuth2\Exceptions\Response\OAuth2ResponseErrorException;
 use TrayDigita\OAuth2\Exceptions\StrictParameterException;
 use TrayDigita\OAuth2\Exceptions\UnsatisfiedGrantParameterException;
 use TrayDigita\OAuth2\Exceptions\UnsupportedOperationException;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantRequestParametersInterface;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeAuthorizationRequest;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeTokenRequest;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantParametersInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeAuthorization;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantTypeToken;
+use TrayDigita\OAuth2\Servers\ErrorUris;
+use function array_fill_keys;
 use function array_key_exists;
 use function array_unshift;
 use function gettype;
 use function in_array;
+use function is_array;
 use function is_string;
 use function sprintf;
 
@@ -24,9 +30,11 @@ use function sprintf;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section
  *
  * @template GrantType of non-empty-string
- * @template-implements GrantRequestParametersInterface<GrantType>
+ * @template GrantTypeKey of non-empty-string
+ * @template GrantTypeValue of non-empty-string
+ * @template-implements GrantParametersInterface<GrantType, GrantTypeKey, GrantTypeValue>
  */
-abstract class AbstractGrant implements GrantRequestParametersInterface
+abstract class AbstractGrant implements GrantParametersInterface
 {
     /**
      * @var list<RequestType> $grantTypeSupportedRequestTypes
@@ -36,8 +44,28 @@ abstract class AbstractGrant implements GrantRequestParametersInterface
 
     /**
      * @inheritdoc
+     * @return GrantType
      */
     abstract public function getGrantType(): string;
+
+    /**
+     * @inheritdoc
+     * @return GrantTypeKey
+     */
+    abstract public function getGrantTypeKey(): string;
+
+    /**
+     * @inheritdoc
+     * @return GrantTypeValue
+     */
+    public function getGrantTypeValue(): string
+    {
+        /**
+         * @var GrantTypeValue $value
+         */
+        $value = $this->getGrantType();
+        return $value;
+    }
 
     /**
      * @inheritdoc
@@ -56,10 +84,10 @@ abstract class AbstractGrant implements GrantRequestParametersInterface
             return $this->grantTypeSupportedRequestTypes;
         }
         $types = [];
-        if ($this instanceof GrantTypeAuthorizationRequest) {
+        if ($this instanceof GrantTypeAuthorization) {
             $types[] = RequestType::AUTHORIZATION;
         }
-        if ($this instanceof GrantTypeTokenRequest) {
+        if ($this instanceof GrantTypeToken) {
             $types[] = RequestType::TOKEN;
         }
         return $this->grantTypeSupportedRequestTypes = $types;
@@ -69,7 +97,7 @@ abstract class AbstractGrant implements GrantRequestParametersInterface
      * @inheritdoc
      * @return list<non-empty-string>&list<'grant_type'>
      */
-    public function getRequiredParameters(RequestType $requestType): array
+    public function getRequiredClientRequestParameters(RequestType $requestType): array
     {
         return [
             'grant_type'
@@ -79,15 +107,24 @@ abstract class AbstractGrant implements GrantRequestParametersInterface
     /**
      * @inheritdoc
      */
-    public function isStrictParameter(): bool
+    public function isStrictClientRequestParameter(): bool
     {
         return false;
     }
 
     /**
      * @inheritdoc
+     * @phpstan-return ($grantTypeRequest is GrantTypeValue ? true : false)
      */
-    public function getOptionalParameters(RequestType $requestType): array
+    public function isGrantTypeRequestValid(string $grantTypeRequest): bool
+    {
+        return $grantTypeRequest === $this->getGrantTypeValue();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getOptionalClientRequestParameters(RequestType $requestType): array
     {
         return [
             'scope',
@@ -98,17 +135,29 @@ abstract class AbstractGrant implements GrantRequestParametersInterface
     /**
      * @inheritdoc
      */
-    public function isAllowedParameter(RequestType $requestType, string $parameter, mixed $value): bool
+    public function isClientParameterSatisfied(RequestType $requestType, string $parameter, mixed $value): bool
     {
-        return $parameter === 'grant_type' || in_array(
+        if ($parameter === $this->getGrantTypeKey()) {
+            return is_string($value) && $this->isGrantTypeRequestValid($value);
+        }
+        if ($parameter === 'grant_type') { // client use grant type
+            return $value === $this->getGrantType();
+        }
+        if (in_array(
             $parameter,
-            $this->getRequiredParameters($requestType),
+            $this->getRequiredClientRequestParameters($requestType),
             true
-        ) || in_array(
+        )) {
+            return is_string($value);
+        }
+        if (in_array(
             $parameter,
-            $this->getOptionalParameters($requestType),
+            $this->getOptionalClientRequestParameters($requestType),
             true
-        );
+        )) {
+            return is_string($value);
+        }
+        return !$this->isStrictClientRequestParameter() && is_string($value);
     }
 
     /**
@@ -130,11 +179,11 @@ abstract class AbstractGrant implements GrantRequestParametersInterface
                 $this->getGrantType()
             ));
         }
-        $requiredParameters = $this->getRequiredParameters($requestType);
+        $requiredParameters = $this->getRequiredClientRequestParameters($requestType);
         if (!in_array('grant_type', $parameters)) {
             array_unshift($requiredParameters, 'grant_type');
         }
-        $isStrict = $this->isStrictParameter();
+        $isStrict = $this->isStrictClientRequestParameter();
         foreach ($requiredParameters as $parameter) {
             if (!array_key_exists($parameter, $parameters)) {
                 throw new UnsatisfiedGrantParameterException(sprintf('Missing required parameter: %s', $parameter));
@@ -157,7 +206,7 @@ abstract class AbstractGrant implements GrantRequestParametersInterface
         }
         if ($isStrict) {
             foreach ($parameters as $parameter => $value) {
-                if (!$this->isAllowedParameter($requestType, $parameter, $value)) {
+                if (!$this->isClientParameterSatisfied($requestType, $parameter, $value)) {
                     throw new StrictParameterException(sprintf('Unexpected parameter: %s', $parameter));
                 }
             }
@@ -185,8 +234,11 @@ abstract class AbstractGrant implements GrantRequestParametersInterface
      *      ...<TKey, TValue>
      *  }
      */
-    public function prepareParameters(RequestType $requestType, array $parameters, array $defaultParameters): array
-    {
+    public function prepareClientRequestParameters(
+        RequestType $requestType,
+        array $parameters,
+        array $defaultParameters
+    ): array {
         $defaultParameters['grant_type'] = $this->getGrantType();
         $parameters = [...$defaultParameters, ...$parameters];
         $this->assertRequiredParameters($requestType, $parameters);
@@ -200,6 +252,219 @@ abstract class AbstractGrant implements GrantRequestParametersInterface
          *   } $parameters
          */
         return $parameters;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getServerRequestType(ServerRequestInterface $request) : RequestType
+    {
+        $method = $request->getMethod();
+        foreach ($this->getSupportedRequestTypes() as $requestType) {
+            if ($requestType->getRequestMethod()->value === $method) {
+                return $requestType;
+            }
+        }
+        throw new UnsupportedOperationException(sprintf(
+            'Unsupported request method: %s for %s',
+            $method,
+            $this->getGrantType()
+        ));
+    }
+
+    /**
+     * @inheritdoc
+     * @return array<GrantTypeKey, GrantTypeValue>&array{
+     *     state?: string,
+     *     scope?: string,
+     *     ...<string, mixed>,
+     * }
+     */
+    public function parseServerRequest(
+        ServerRequestInterface $request
+    ): array {
+        try {
+            $requestType = $this->getServerRequestType($request);
+        } catch (UnsupportedOperationException $e) {
+            throw new OAuth2ResponseErrorException(
+                ErrorType::INVALID_CLIENT,
+                errorUri: ErrorUris::errorUriFor($this->getGrantType()),
+                previous: $e
+            );
+        }
+        if (!$this->isSupportedRequest($request)) {
+             throw new OAuth2ResponseErrorException(
+                 ErrorType::INVALID_CLIENT,
+                 errorUri: ErrorUris::errorUriFor($this->getGrantType()),
+             );
+        }
+
+        $method = $request->getMethod();
+        if ($requestType->getRequestMethod()->value !== $method
+            || !in_array($requestType, $this->getSupportedRequestTypes())
+        ) {
+            throw new OAuth2ResponseErrorException(
+                ErrorType::INVALID_CLIENT,
+                errorUri: ErrorUris::errorUriFor($requestType->value),
+            );
+        }
+
+        // start here, we can be sure that the request method is valid and supported by the grant type
+        $params = $method === 'POST'
+            ? $request->getParsedBody()
+            : $request->getQueryParams();
+        $state = is_array($params)
+            ? $params['state']
+            : null;
+        $errState = is_string($state) ? $state : null;
+        $scope = is_array($params)
+            ? $params['scope']
+            : null;
+        if (!is_array($params)) {
+            throw new OAuth2ResponseErrorException(
+                ErrorType::INVALID_REQUEST,
+                errorUri: ErrorUris::errorUriFor($requestType->value),
+                state: $errState
+            );
+        }
+        if (isset($params['state'])) {
+            if ($state !== null && !is_string($state)) {
+                throw new OAuth2ResponseErrorException(
+                    ErrorType::INVALID_STATE,
+                    errorUri: ErrorUris::errorUriFor('state'),
+                    state: $errState
+                );
+            }
+        }
+        if (isset($params['scope'])) {
+            if ($scope !== null && !is_string($scope)) {
+                throw new OAuth2ResponseErrorException(
+                    ErrorType::INVALID_SCOPE,
+                    errorUri: ErrorUris::errorUriFor('scope'),
+                );
+            }
+        }
+        /**
+         * @var array{'grant_type': mixed, ...<string, mixed>} $parameters
+         */
+        $parameters = array_fill_keys($this->getRequiredClientRequestParameters($requestType), null);
+        unset($parameters['grant_type']);
+        $parameters[$this->getGrantTypeKey()] = null;
+        foreach ($parameters as $key => $item) {
+            if (!isset($params[$key])) {
+                throw new OAuth2ResponseErrorException(
+                    ErrorType::INVALID_REQUEST,
+                    errorUri: ErrorUris::errorUriFor($key),
+                    state: $errState,
+                    message: sprintf('Parameter "%s" is required', $key)
+                );
+            }
+            if ($key === $this->getGrantTypeKey()) {
+                if (!$this->isGrantTypeRequestValid($params[$key])) {
+                    throw new OAuth2ResponseErrorException(
+                        ErrorType::INVALID_GRANT,
+                        errorUri: ErrorUris::errorUriFor($key),
+                        state: $errState,
+                    );
+                }
+            }
+            if (!$this->isClientParameterSatisfied($requestType, $key, $params[$key])) {
+                throw new OAuth2ResponseErrorException(
+                    ErrorType::INVALID_REQUEST,
+                    errorUri: ErrorUris::errorUriFor($key),
+                    state: $errState,
+                    message: sprintf('Parameter "%s" is not valid', $key)
+                );
+            }
+            $parameters[$key] = $params[$key];
+        }
+
+        foreach ($this->getOptionalClientRequestParameters($requestType) as $key) {
+            if (isset($parameters[$key])) {
+                continue; // skip
+            }
+            if (!isset($params[$key])) {
+                $parameters[$key] = null; // setup
+                continue;
+            }
+            if (!$this->isClientParameterSatisfied($requestType, $key, $params[$key])) {
+                throw new OAuth2ResponseErrorException(
+                    ErrorType::INVALID_REQUEST,
+                    errorUri: ErrorUris::errorUriFor($key),
+                    state: $errState,
+                    message: sprintf('Parameter "%s" is not valid', $key)
+                );
+            }
+            $parameters[$key] = $params[$key];
+        }
+        /**
+         * @var array<GrantTypeKey, GrantTypeValue>&array{
+         *      state?: string,
+         *      scope?: string,
+         *      ...<string, mixed>,
+         *  } $parameters
+         */
+        return $parameters;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function findGrantType(ServerRequestInterface $request): ?string
+    {
+        $method = $request->getMethod();
+        // method only support GET or POST
+        if ($method !== 'GET' && $method !== 'POST') {
+            return null;
+        }
+
+        $params = $method === 'POST'
+            ? $request->getParsedBody()
+            : $request->getQueryParams();
+        if (!is_array($params)) {
+            return null;
+        }
+        $grant = $params[$this->getGrantTypeKey()] ?? null;
+        if (!is_string($grant)) {
+            return null;
+        }
+        /**
+         * @var GrantType $grant
+         */
+        return $this->isGrantTypeRequestValid($grant) ? $grant : null;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function isSupportedRequest(ServerRequestInterface $request) : bool
+    {
+        $method = $request->getMethod();
+        // method only support GET or POST
+        if ($method !== 'GET' && $method !== 'POST') {
+            return false;
+        }
+        $satisfy = false;
+        foreach ($this->getSupportedRequestTypes() as $requestType) {
+            if ($requestType->getRequestMethod()->value === $method) {
+                $satisfy = true;
+                break;
+            }
+        }
+        if (!$satisfy) {
+            return false;
+        }
+        $params = $method === 'POST'
+            ? $request->getParsedBody()
+            : $request->getQueryParams();
+        if (!is_array($params)) {
+            return false;
+        }
+        $grant = $params[$this->getGrantTypeKey()] ?? null;
+        if (!is_string($grant)) {
+            return false;
+        }
+        return $this->isGrantTypeRequestValid($grant);
     }
 
     /**

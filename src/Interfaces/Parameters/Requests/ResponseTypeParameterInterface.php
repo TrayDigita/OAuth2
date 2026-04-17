@@ -25,7 +25,8 @@ namespace TrayDigita\OAuth2\Interfaces\Parameters\Requests;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-8.4
  *
- * @meta response_type: "code"
+ * @meta response_type: "code"|"token"
+ * @template TResponse of "code"|"token"
  */
 interface ResponseTypeParameterInterface
 {
@@ -37,7 +38,7 @@ interface ResponseTypeParameterInterface
     /**
      * The response type as described on RFC6749#section-4.1.1
      * The most response type must "code",
-     * @return "code"
+     * @return TResponse
      */
     public function getResponseType() : string;
 }

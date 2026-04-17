@@ -13,8 +13,6 @@ use TrayDigita\OAuth2\Interfaces\Scratches\TimestampInterface;
  * The Initial Registry Contents
  *
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-11.2.2
- * @template TKey of non-empty-string
- * @template TValue
  * @template TokenType of non-empty-string
  * @template TState of string|null
  * @template TScope of string|null
@@ -29,7 +27,7 @@ interface AuthorizationCodeInterface extends
      * Data collection for access token, this is for custom data that can be added to the access token response
      * This is not defined in RFC6749, but it can be used to add custom data to the access token response.
      *
-     * @return CollectionInterface<TKey, TValue>
+     * @return CollectionInterface<non-empty-string, mixed>
      *     should return collection of custom data that can be added to the access token response
      */
     public function getData(): CollectionInterface;

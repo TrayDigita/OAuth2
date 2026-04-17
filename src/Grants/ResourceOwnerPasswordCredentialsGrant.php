@@ -77,7 +77,7 @@ use TrayDigita\OAuth2\Interfaces\Requests\Grants\ResourceOwnerGrantInterface;
  * @see https://datatracker.ietf.org/doc/html/rfc6749#section-4.3.2
  * @see https://datatracker.ietf.org/doc/html/rfc6749#section-4.3
  *
- * @template-extends AbstractGrant<"password">
+ * @template-extends AbstractGrant<"password", "grant_type", "password">
  */
 class ResourceOwnerPasswordCredentialsGrant extends AbstractGrant implements ResourceOwnerGrantInterface
 {
@@ -120,7 +120,7 @@ class ResourceOwnerPasswordCredentialsGrant extends AbstractGrant implements Res
     /**
      * @inheritdoc
      */
-    public function getOptionalParameters(RequestType $requestType): array
+    public function getOptionalClientRequestParameters(RequestType $requestType): array
     {
         /**
          * Optional scope parameter, which is a space-delimited list of scopes that the client is requesting.
@@ -136,12 +136,20 @@ class ResourceOwnerPasswordCredentialsGrant extends AbstractGrant implements Res
      * @inheritdoc
      * @return list<non-empty-string>&list<'grant_type','username','password'>
      */
-    public function getRequiredParameters(RequestType $requestType): array
+    public function getRequiredClientRequestParameters(RequestType $requestType): array
     {
         return [
             'grant_type',
             'username',
             'password'
         ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getGrantTypeKey(): string
+    {
+        return 'grant_type';
     }
 }

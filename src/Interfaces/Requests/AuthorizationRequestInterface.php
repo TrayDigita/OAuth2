@@ -8,12 +8,18 @@ use TrayDigita\OAuth2\Interfaces\Parameters\Requests\RedirectUriParameterInterfa
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\ResponseTypeParameterInterface;
 use TrayDigita\OAuth2\Interfaces\Parameters\ScopeParameterInterface;
 use TrayDigita\OAuth2\Interfaces\Parameters\StateParameterInterface;
+use TrayDigita\OAuth2\Interfaces\Scratches\PreparationRequestInterface;
 
+/**
+ * @template TResponse of "code"|"token"
+ * @template-extends ResponseTypeParameterInterface<TResponse>
+ */
 interface AuthorizationRequestInterface extends
     ClientIdParameterInterface,
     ResponseTypeParameterInterface,
     RedirectUriParameterInterface,
     ScopeParameterInterface,
-    StateParameterInterface
+    StateParameterInterface,
+    PreparationRequestInterface
 {
 }

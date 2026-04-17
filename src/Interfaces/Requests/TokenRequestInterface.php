@@ -5,6 +5,7 @@ namespace TrayDigita\OAuth2\Interfaces\Requests;
 
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\GrantTypeParameterInterface;
 use TrayDigita\OAuth2\Interfaces\Parameters\Requests\RedirectUriParameterInterface;
+use TrayDigita\OAuth2\Interfaces\Scratches\PreparationRequestInterface;
 use TrayDigita\OAuth2\Interfaces\Scratches\TokenInterface;
 
 /**
@@ -19,6 +20,7 @@ use TrayDigita\OAuth2\Interfaces\Scratches\TokenInterface;
 interface TokenRequestInterface extends
     TokenInterface,
     GrantTypeParameterInterface,
-    RedirectUriParameterInterface
+    RedirectUriParameterInterface,
+    PreparationRequestInterface
 {
 }

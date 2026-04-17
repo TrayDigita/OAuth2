@@ -1,8 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace TrayDigita\OAuth2\Clients;
+namespace TrayDigita\OAuth2;
 
+use ArrayIterator;
+use IteratorAggregate;
+use Traversable;
 use TrayDigita\OAuth2\Exceptions\GrantNotFoundException;
 use TrayDigita\OAuth2\Exceptions\UnsupportedGrantException;
 use TrayDigita\OAuth2\Grants\AuthorizationCodeGrant;
@@ -14,7 +17,7 @@ use TrayDigita\OAuth2\Interfaces\Clients\GrantRegistryInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\AuthorizationCodeGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ClientCredentialsGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ExtensionsGrantInterface;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantRequestParametersInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantParametersInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ImplicitGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\RefreshTokenGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ResourceOwnerGrantInterface;
@@ -26,8 +29,13 @@ use TrayDigita\OAuth2\Interfaces\Requests\Grants\ResourceOwnerGrantInterface;
  * the various grant types and their associated request parameters in an OAuth2 server implementation.
  *
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.1
+ *
+ * @template GrantReg of GrantParametersInterface
+ * @template TList of "authorization_code"|"client_credentials"|"refresh_token"|"password"|"implicit"|non-empty-string
+ * @template-implements IteratorAggregate<TList, GrantReg<TList, non-empty-string, non-empty-string>>
+ * @template-implements GrantRegistryInterface<TList>
  */
-class GrantRegistry implements GrantRegistryInterface
+class GrantRegistry implements GrantRegistryInterface, IteratorAggregate
 {
     /**
      * @var array{
@@ -199,13 +207,13 @@ class GrantRegistry implements GrantRegistryInterface
      *
      * @template T of "authorization_code"|"client_credentials"|"refresh_token"|"password"|"implicit"|non-empty-string
      * @phpstan-param T $grantType
-     * @phpstan-return GrantRequestParametersInterface<T>
+     * @phpstan-return GrantParametersInterface<T, non-empty-string, non-empty-string>
      * @throws GrantNotFoundException
      */
-    public function getGrant(string $grantType): GrantRequestParametersInterface
+    public function getGrant(string $grantType): GrantParametersInterface
     {
         /**
-         * @var GrantRequestParametersInterface<T> $result
+         * @var GrantParametersInterface<T, non-empty-string, non-empty-string> $result
          */
         // this is always return GrantRequestParametersInterface<T> because of the type constraint on T
         $result = match ($grantType) { // @phpstan-ignore-line
@@ -216,6 +224,44 @@ class GrantRegistry implements GrantRegistryInterface
             'implicit' => $this->getImplicitGrant(),
             default => $this->getExtensionGrant($grantType)
         };
+        return $result;
+    }
+
+    /**
+     * @inheritdoc
+     * @return non-empty-array<non-empty-string, GrantReg<TList, non-empty-string, non-empty-string>>
+     * /
+     */
+    public function getGrants(): array
+    {
+        $grants = [
+            'authorization_code' => $this->getAuthorizationCodeGrant(),
+            'client_credentials' => $this->getClientCredentialGrant(),
+            'refresh_token' => $this->getRefreshTokenGrant(),
+            'password' => $this->getResourceOwnerPasswordCredentialsGrant(),
+            'implicit' => $this->getImplicitGrant(),
+        ];
+        foreach ($this->extensionGrants as $urn => $extensionGrant) {
+            if (isset($grants[$urn])) {
+                continue; // skip if the grant type already exists in the standard grants
+            }
+            $grants[$urn] = $extensionGrant;
+        }
+        /**
+         * @var non-empty-array<non-empty-string, GrantReg<TList, non-empty-string, non-empty-string>> $grants
+         */
+        return $grants;
+    }
+
+    /**
+     * @return Traversable<TList, GrantReg<TList, non-empty-string, non-empty-string>>
+     */
+    public function getIterator(): Traversable
+    {
+        /**
+         * @var Traversable<TList, GrantReg<TList, non-empty-string, non-empty-string>> $result
+         */
+        $result = new ArrayIterator($this->getGrants());
         return $result;
     }
 }

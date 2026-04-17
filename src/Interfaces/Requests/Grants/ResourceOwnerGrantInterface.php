@@ -74,9 +74,9 @@ use TrayDigita\OAuth2\Enums\RequestType;
  * @see https://datatracker.ietf.org/doc/html/rfc6749#section-4.3.2
  * @see https://datatracker.ietf.org/doc/html/rfc6749#section-4.3
  *
- * @template-extends GrantTypeTokenRequest<"password">
+ * @template-extends GrantTypeToken<"password", "grant_type", "password">
  */
-interface ResourceOwnerGrantInterface extends GrantTypeTokenRequest
+interface ResourceOwnerGrantInterface extends GrantTypeToken
 {
     /**
      * Grant name constant
@@ -86,9 +86,15 @@ interface ResourceOwnerGrantInterface extends GrantTypeTokenRequest
 
     /**
      * @inheritdoc
+     * @return "grant_type"
+     */
+    public function getGrantTypeKey(): string;
+
+    /**
+     * @inheritdoc
      * @return list<'grant_type','username','password'>&list<non-empty-string>
      */
-    public function getRequiredParameters(RequestType $requestType): array;
+    public function getRequiredClientRequestParameters(RequestType $requestType): array;
 
     /**
      * @inheritdoc
@@ -108,5 +114,9 @@ interface ResourceOwnerGrantInterface extends GrantTypeTokenRequest
      *     ...<TKey, TValue>
      * }
      */
-    public function prepareParameters(RequestType $requestType, array $parameters, array $defaultParameters): array;
+    public function prepareClientRequestParameters(
+        RequestType $requestType,
+        array $parameters,
+        array $defaultParameters
+    ): array;
 }

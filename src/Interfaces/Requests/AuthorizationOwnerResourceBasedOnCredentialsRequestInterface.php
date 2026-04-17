@@ -20,4 +20,21 @@ interface AuthorizationOwnerResourceBasedOnCredentialsRequestInterface extends
     UsernameParameterInterface,
     PasswordParameterInterface
 {
+    /**
+     * @inheritdoc
+     * @return non-empty-string
+     */
+    public function getUsername(): string;
+
+    /**
+     * @inheritdoc
+     * @return non-empty-string
+     */
+    public function getPassword(): string;
+
+    /**
+     * @inheritdoc
+     * @return non-empty-string
+     */
+    public function getRedirectUri(): string;
 }

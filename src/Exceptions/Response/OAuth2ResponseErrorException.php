@@ -28,6 +28,11 @@ class OAuth2ResponseErrorException extends RuntimeException implements
     ResponseErrorExceptionInterface
 {
     /**
+     * @var string $error
+     */
+    private readonly string $error;
+
+    /**
      * The error type associated with the error code
      */
     private readonly ErrorType $errorType;
@@ -40,7 +45,7 @@ class OAuth2ResponseErrorException extends RuntimeException implements
     /**
      * OAuth2ResponseException constructor.
      *
-     * @param string $error The error code
+     * @param string|ErrorType $error The error code
      * @param string|null $errorUri The error URI
      * @param string|null $state The state parameter from the request
      * @param int|null $httpStatusCode The HTTP status code
@@ -52,7 +57,7 @@ class OAuth2ResponseErrorException extends RuntimeException implements
      * (optional, defaults to null)
      */
     public function __construct(
-        private readonly string  $error,
+        string|ErrorType $error,
         private readonly ?string $errorUri = null,
         private readonly ?string $state = null,
         ?int                     $httpStatusCode = null,
@@ -60,7 +65,8 @@ class OAuth2ResponseErrorException extends RuntimeException implements
         int                      $code = 0,
         ?Throwable               $previous = null
     ) {
-        $this->errorType = ErrorType::fromError($this->error);
+        $this->error = $error instanceof ErrorType ? $error->value : $error;
+        $this->errorType = $error instanceof ErrorType ? $error: ErrorType::fromError($error);
         $this->httpStatusCode = $httpStatusCode ?? $this->errorType->getHttpStatusCode();
         $message = $message ?: $this->errorType->getDescription();
         parent::__construct($message, $code, $previous);

@@ -54,13 +54,19 @@ namespace TrayDigita\OAuth2\Interfaces\Requests\Grants;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.4 Client Credentials Grant (RFC 6749, §4.4)
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.4
  *
- * @template-extends GrantTypeTokenRequest<"client_credentials">
+ * @template-extends GrantTypeToken<"client_credentials", "grant_type", "client_credentials">
  */
-interface ClientCredentialsGrantInterface extends GrantTypeTokenRequest
+interface ClientCredentialsGrantInterface extends GrantTypeToken
 {
     /**
      * Grant name constant
      * @var "client_credentials"
      */
     public const TYPE = 'client_credentials';
+
+    /**
+     * @inheritdoc
+     * @return "grant_type"
+     */
+    public function getGrantTypeKey(): string;
 }

@@ -6,7 +6,7 @@ namespace TrayDigita\OAuth2\Interfaces\Clients;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\AuthorizationCodeGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ClientCredentialsGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ExtensionsGrantInterface;
-use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantRequestParametersInterface;
+use TrayDigita\OAuth2\Interfaces\Requests\Grants\GrantParametersInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ImplicitGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\RefreshTokenGrantInterface;
 use TrayDigita\OAuth2\Interfaces\Requests\Grants\ResourceOwnerGrantInterface;
@@ -17,6 +17,7 @@ use TrayDigita\OAuth2\Interfaces\Requests\Grants\ResourceOwnerGrantInterface;
  * This interface defines the contract for a grant registry that manages the various grant types
  * and their associated request parameters in an OAuth2 server implementation.
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.1
+ * @template TList of "authorization_code"|"client_credentials"|"refresh_token"|"password"|"implicit"|non-empty-string
  */
 interface GrantRegistryInterface
 {
@@ -146,11 +147,17 @@ interface GrantRegistryInterface
     /**
      * Get the grant request parameters for the specified grant type.
      *
-     * @template T of "authorization_code"|"client_credentials"|"refresh_token"|"password"|"implicit"|non-empty-string
+     * @template T of TList
      * @phpstan-param T $grantType
-     * @phpstan-return GrantRequestParametersInterface<T>
+     * @phpstan-return GrantParametersInterface<T, non-empty-string, non-empty-string>
      * @throws \TrayDigita\OAuth2\Exceptions\GrantNotFoundException
      * @noinspection PhpFullyQualifiedNameUsageInspection
      */
-    public function getGrant(string $grantType): GrantRequestParametersInterface;
+    public function getGrant(string $grantType): GrantParametersInterface;
+
+    /**
+     * Get all the grant request parameters for the registered grant types.
+     * @return non-empty-array<non-empty-string, GrantParametersInterface<TList, non-empty-string, non-empty-string>>
+     */
+    public function getGrants(): array;
 }

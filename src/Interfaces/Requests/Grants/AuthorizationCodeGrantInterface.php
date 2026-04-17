@@ -104,18 +104,33 @@ use TrayDigita\OAuth2\Enums\RequestType;
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2 Authorization Response
  * @see https://datatracker.ietf.org/doc/html/rfc2616 RFC2616 - HTTP
  *
- * @template-extends GrantTypeAuthorizationRequest<"authorization_code">
- * @template-extends GrantTypeTokenRequest<"authorization_code">
+ * @template-extends GrantTypeAuthorization<"authorization_code", "response_type", "code">
+ * @template-extends GrantTypeToken<"authorization_code", "response_type", "code">
  */
 interface AuthorizationCodeGrantInterface extends
-    GrantTypeAuthorizationRequest,
-    GrantTypeTokenRequest
+    GrantTypeAuthorization,
+    GrantTypeToken
 {
     /**
      * Grant name constant
      * @var "authorization_code"
      */
     public const TYPE = 'authorization_code';
+
+    /**
+     * @inheritdoc
+     * @return "response_type"
+     */
+    public function getGrantTypeKey(): string;
+
+    /**
+     * check if grant type valid
+     *
+     * @param string $grantTypeRequest
+     * @return bool
+     * @phpstan-return ($grantTypeRequest is "code" ? true : false)
+     */
+    public function isGrantTypeRequestValid(string $grantTypeRequest) : bool;
 
     /**
      * Required parameters for the grant type, including the "grant_type" parameter.
@@ -126,7 +141,7 @@ interface AuthorizationCodeGrantInterface extends
      * @param RequestType $requestType The type of the request (e.g., authorization request, token request, etc.)
      * @return list<'grant_type','code'>&list<non-empty-string>
      */
-    public function getRequiredParameters(RequestType $requestType): array;
+    public function getRequiredClientRequestParameters(RequestType $requestType): array;
 
     /**
      * @inheritdoc
@@ -145,5 +160,9 @@ interface AuthorizationCodeGrantInterface extends
      *     ...<TKey, TValue>
      * }
      */
-    public function prepareParameters(RequestType $requestType, array $parameters, array $defaultParameters): array;
+    public function prepareClientRequestParameters(
+        RequestType $requestType,
+        array $parameters,
+        array $defaultParameters
+    ): array;
 }

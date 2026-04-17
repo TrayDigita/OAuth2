@@ -37,7 +37,10 @@
         "slevomat/coding-standard": "^8.28.1",
         "squizlabs/php_codesniffer": "^4.0.1",
         "phpunit/phpunit": "^10.5",
-        "guzzlehttp/guzzle": "7.10.0"
+        "guzzlehttp/guzzle": "7.10.0",
+        "nyholm/psr7": "1.8.2",
+        "laminas/laminas-diactoros": "^3.7 || ^3.8",
+        "symfony/http-client": "^6.4 || ^7.0 || ^v8.0"
     },
     "suggest": {
         "guzzlehttp/guzzle": "For PSR-18 HTTP client implementation"
