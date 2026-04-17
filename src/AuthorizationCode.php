@@ -15,15 +15,14 @@ use function trim;
 use const ARRAY_FILTER_USE_BOTH;
 
 /**
- * @template TokenType of non-empty-string
  * @template TState of string
  * @template TScope of string
- * @template-implements AuthorizationCodeInterface<TokenType, ?TState, ?TScope>
+ * @template-implements AuthorizationCodeInterface<?TState, ?TScope>
  */
 class AuthorizationCode implements AuthorizationCodeInterface
 {
     /**
-     * @use BaseStorageResponseTrait<TokenType, TState, TScope>
+     * @use BaseStorageResponseTrait<TState, TScope>
      */
     use BaseStorageResponseTrait {
         __construct as private baseConstruct;
@@ -88,7 +87,6 @@ class AuthorizationCode implements AuthorizationCodeInterface
      * @return array{
      *      "code": non-empty-string,
      *      "timestamp": positive-int,
-     *      "token_type": TokenType,
      *      "expires_in"?: int|null, // recommended depending lifetime
      *      "state"?: TState, // state is required if client sending state
      *      "scope"?: TScope,
@@ -111,7 +109,6 @@ class AuthorizationCode implements AuthorizationCodeInterface
          * @var array{
          *       "code": non-empty-string,
          *       "timestamp": positive-int,
-         *       "token_type": TokenType,
          *       "expires_in"?: int|null, // recommended depending lifetime
          *       "state"?: TState, // state is required if client sending state
          *       "scope"?: TScope,
@@ -124,6 +121,14 @@ class AuthorizationCode implements AuthorizationCodeInterface
             ARRAY_FILTER_USE_BOTH
         );
         return $array;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 
     /**

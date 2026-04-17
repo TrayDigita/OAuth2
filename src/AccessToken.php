@@ -30,11 +30,21 @@ use const ARRAY_FILTER_USE_BOTH;
 class AccessToken implements AccessTokenInterface
 {
     /**
-     * @use BaseStorageResponseTrait<TokenType, TState, TScope>
+     * @use BaseStorageResponseTrait<TState, TScope>
      */
     use BaseStorageResponseTrait {
         __construct as private baseConstruct;
     }
+
+    /**
+     * @var TokenType Access Token Type
+     */
+    protected string $tokenType;
+
+    /**
+     * @var non-empty-string Access token string
+     */
+    protected string $accessToken;
 
     /**
      * @var FreezableCollectionInterface<non-empty-string, mixed> Access token data
@@ -73,6 +83,11 @@ class AccessToken implements AccessTokenInterface
                 'The access token is required and must be a string.'
             );
         }
+        if ($data['access_token'] === '') {
+            throw new InvalidAccessTokenException(
+                'The access token cannot be an empty string.'
+            );
+        }
         $refreshToken = null;
         $resourceOwnerId = null;
         if (isset($data['refresh_token'])) {
@@ -88,8 +103,17 @@ class AccessToken implements AccessTokenInterface
                 );
             }
             $resourceOwnerId = (string)$data['resource_owner_id'];
-            $data->set('resource_owner_id', $this->resourceOwnerId);
         }
+        if (!isset($data['token_type']) || !is_string($data['token_type']) || trim($data['token_type']) === '') {
+            throw new UnsatisfiedParameterException(
+                'The token type is required and must be a non-empty string.'
+            );
+        }
+        $tokenType = $data['token_type'];
+        /**
+         * @var TokenType $tokenType
+         */
+        $this->tokenType = $tokenType;
         /**
          * @var TRefreshToken $refreshToken
          */
@@ -112,6 +136,15 @@ class AccessToken implements AccessTokenInterface
     public function getAccessToken(): string
     {
         return $this->accessToken;
+    }
+
+    /**
+     * @Inheritdoc
+     * @return TokenType
+     */
+    public function getTokenType(): string
+    {
+        return $this->tokenType;
     }
 
     /**
@@ -197,23 +230,23 @@ class AccessToken implements AccessTokenInterface
         return $array;
     }
 
-//    /**
-//     * @inheritdoc
-//     * @return array{
-//     *     'timestamp': positive-int,
-//     *     "access_token": string,
-//     *     "token_type": TokenType,
-//     *     "expires_in"?: int|null, // recommended depending lifetime
-//     *     "refresh_token"?: ?TRefreshToken,
-//     *     "scope"?: ?TScope, // required if scope not null
-//     *     "state"?: ?TState, // state is optional but recommended on some cases
-//     *     ...<non-empty-string, mixed>
-//     * }
-//     * @uses self::toArray() to get the array representation of the access token,
-//     *      then it can be used to serialize the access token to JSON
-//     */
-//    public function jsonSerialize(): array
-//    {
-//        return $this->toArray();
-//    }
+    /**
+     * @inheritdoc
+     * @return array{
+     *     'timestamp': positive-int,
+     *     "access_token": string,
+     *     "token_type": TokenType,
+     *     "expires_in"?: int|null, // recommended depending lifetime
+     *     "refresh_token"?: ?TRefreshToken,
+     *     "scope"?: ?TScope, // required if scope not null
+     *     "state"?: ?TState, // state is optional but recommended on some cases
+     *     ...<non-empty-string, mixed>
+     * }
+     * @uses self::toArray() to get the array representation of the access token,
+     *      then it can be used to serialize the access token to JSON
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
 }

@@ -6,7 +6,6 @@ namespace TrayDigita\OAuth2\Interfaces\Responses;
 use JsonSerializable;
 use TrayDigita\OAuth2\Interfaces\Parameters\CodeParameterInterface;
 use TrayDigita\OAuth2\Interfaces\Parameters\Responses\ExpiresInParameterInterface;
-use TrayDigita\OAuth2\Interfaces\Parameters\Responses\TokenTypeParameterInterface;
 use TrayDigita\OAuth2\Interfaces\Parameters\ScopeParameterInterface;
 use TrayDigita\OAuth2\Interfaces\Parameters\StateParameterInterface;
 
@@ -24,7 +23,6 @@ use TrayDigita\OAuth2\Interfaces\Parameters\StateParameterInterface;
  * </code>
  * @link https://datatracker.ietf.org/doc/html/rfc6749#appendix-B
  *
- * @template TokenType of non-empty-string
  * @template TState of string|null
  * @template TScope of string|null
  * @note
@@ -37,7 +35,6 @@ interface AuthorizationResponseInterface extends
     StateParameterInterface,
     CodeParameterInterface,
     ExpiresInParameterInterface,
-    TokenTypeParameterInterface,
     JsonSerializable
 {
     /**
@@ -54,7 +51,6 @@ interface AuthorizationResponseInterface extends
     /**
      * @return array{
      *     "code": non-empty-string,
-     *     "token_type": TokenType,
      *     "expires_in"?: int|null, // recommended depending lifetime
      *     "state"?: TState, // state is required if client sending state
      *     "scope"?: TScope,

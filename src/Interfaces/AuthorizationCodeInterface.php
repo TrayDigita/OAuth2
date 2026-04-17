@@ -13,10 +13,9 @@ use TrayDigita\OAuth2\Interfaces\Scratches\TimestampInterface;
  * The Initial Registry Contents
  *
  * @link https://datatracker.ietf.org/doc/html/rfc6749#section-11.2.2
- * @template TokenType of non-empty-string
  * @template TState of string|null
  * @template TScope of string|null
- * @template-extends AuthorizationResponseInterface<TokenType, TState, TScope>
+ * @template-extends AuthorizationResponseInterface<TState, TScope>
  */
 interface AuthorizationCodeInterface extends
     AuthorizationResponseInterface,
@@ -39,7 +38,6 @@ interface AuthorizationCodeInterface extends
      * @return array{
      *      "code": non-empty-string,
      *      "timestamp": positive-int,
-     *      "token_type": TokenType,
      *      "expires_in"?: int|null, // recommended depending lifetime
      *      "state"?: TState, // state is required if client sending state
      *      "scope"?: TScope,
@@ -55,7 +53,6 @@ interface AuthorizationCodeInterface extends
      * @return array{
      *     "code": non-empty-string,
      *     "timestamp": positive-int,
-     *     "token_type": TokenType,
      *     "expires_in"?: int|null, // recommended depending lifetime
      *     "state"?: TState, // state is required if client sending state
      *     "scope"?: TScope,

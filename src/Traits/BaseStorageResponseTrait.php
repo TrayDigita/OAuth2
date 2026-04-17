@@ -10,22 +10,11 @@ use function is_string;
 use function time;
 
 /**
- * @template TokenType of non-empty-string
  * @template TState of string
  * @template TScope of string
  */
 trait BaseStorageResponseTrait
 {
-    /**
-     * @var string Access token string
-     */
-    protected string $accessToken;
-
-    /**
-     * @var TokenType Access Token Type
-     */
-    protected string $tokenType;
-
     /**
      * @var ?TScope Scope string, null if not present
      */
@@ -91,11 +80,6 @@ trait BaseStorageResponseTrait
                 'The token type is required and must be a string.'
             );
         }
-        $tokenType = $data['token_type'];
-        /**
-         * @var TokenType $tokenType
-         */
-        $this->tokenType = $tokenType;
         if (isset($data['expires_in'])) {
             if (!is_numeric($data['expires_in'])) {
                 throw new UnsatisfiedParameterException(
@@ -142,14 +126,6 @@ trait BaseStorageResponseTrait
             $this->state = $state;
         }
         $this->data = $data;
-    }
-
-    /**
-     * @Inheritdoc
-     */
-    public function getTokenType(): string
-    {
-        return $this->tokenType;
     }
 
     /**
@@ -212,14 +188,6 @@ trait BaseStorageResponseTrait
     public function getData(): FreezableCollectionInterface
     {
         return $this->data;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function jsonSerialize(): array
-    {
-        return $this->toArray();
     }
 
     /**

@@ -158,7 +158,7 @@ interface ClientProviderInterface
      *
      * @param GrantTypeAuthorization<non-empty-string, non-empty-string, non-empty-string> $authorizationRequest
      *      The parameters of the authorization request associated with the authorization code.
-     * @param AuthorizationResponseInterface<non-empty-string, ?string, ?string> $authorizationResponse
+     * @param AuthorizationResponseInterface<?string, ?string> $authorizationResponse
      * The authorization response containing the authorization code to store.
      * @param CacheItemPoolInterface|null $cachePool The cache pool to use for storing the authorization code.
      * If null, the client provider should use its default cache pool.
